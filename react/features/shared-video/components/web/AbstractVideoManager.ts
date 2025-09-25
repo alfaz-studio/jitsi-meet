@@ -15,7 +15,7 @@ import { dockToolbox } from '../../../toolbox/actions';
 import { muteLocal } from '../../../video-menu/actions.any';
 import { setSharedVideoStatus, stopSharedVideo } from '../../actions';
 import { PLAYBACK_STATUSES } from '../../constants';
-const logger = Logger.getLogger(new URL(import.meta.url).pathname);
+import logger from '../../logger';
 
 /**
  * Return true if the difference between the two times is larger than 5.

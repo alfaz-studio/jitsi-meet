@@ -20,18 +20,28 @@ const ROOT_FILES = [
     'manifest.json',
     'pwa-worker.js',
     'resources/*.txt',
-    'config.js',
-    'interface_config.js',
     'node_modules/@matrix-org/olm/olm.wasm',
     'node_modules/@jitsi/rnnoise-wasm/dist/rnnoise.wasm',
     'react/features/stream-effects/virtual-background/vendor/tflite/*.wasm',
     'node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm',
     'node_modules/@vladmandic/human-models/models/{blazeface-front.bin,blazeface-front.json,emotion.bin,emotion.json}',
+    'config.js',
+    'interface_config.js',
+    'base.html',
+    'body.html',
+    'fonts.html',
+    'head.html',
+    'plugin.head.html',
+    'title.html',
 ];
 
 // Static files to copy to build/static folder
 const STATIC_FILES = [
-    'static/pwa'
+    'static/pwa',
+    'static/settingsToolbarAdditionalContent.html',
+    'static/welcomePageAdditionalCard.html',
+    'static/welcomePageAdditionalContent.html'
+
 ];
 
 // Files to copy to build/libs folder
@@ -228,7 +238,6 @@ function deployLocalPlugin(options = {}) {
 export default defineConfig(({ mode }) => {
     const isProduction = mode === 'production';
     const analyzeBundle = Boolean(process.env.ANALYZE_BUNDLE);
-    const detectCircularDeps = Boolean(process.env.DETECT_CIRCULAR_DEPS)
 
     return {
         plugins: [
@@ -284,6 +293,23 @@ export default defineConfig(({ mode }) => {
                     ]
                 }),
             ] : []),
+            viteStaticCopy({
+                structured: false,
+                targets: [
+                    // Root files
+                    ...['node_modules/@matrix-org/olm/olm.wasm',
+                        'node_modules/@jitsi/rnnoise-wasm/dist/rnnoise.wasm',
+                        'react/features/stream-effects/virtual-background/vendor/tflite/*.wasm',
+                        'node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm',
+                        'node_modules/@vladmandic/human-models/models/{blazeface-front.bin,blazeface-front.json,emotion.bin,emotion.json}',
+                        ].map(src => ({ src, dest: '.', overwrite: 'error' })),
+                    // Library files
+                    ...['node_modules/lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
+                        'react/features/stream-effects/virtual-background/vendor/models/*.tflite',
+                        `node_modules/@jitsi/excalidraw/dist/excalidraw-assets${isProduction ? '' : '-dev'}`,
+                        ].map(src => ({ src, dest: 'libs', overwrite: 'error' })),
+                ]
+            }),
         ],
 
         define: {
@@ -326,10 +352,6 @@ export default defineConfig(({ mode }) => {
                     ]
                 }
             }
-        },
-
-        server: {
-            open: true,
         },
 
         // Configure worker and worklet handling
