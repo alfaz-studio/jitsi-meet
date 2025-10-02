@@ -887,6 +887,7 @@ var config = {
         //    'feedback',
         'filmstrip',
         'fullscreen',
+        'pip',
         'hangup',
 
         //    'help',
