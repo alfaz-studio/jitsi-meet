@@ -3,8 +3,6 @@ import { hasAvailableDevices } from '../base/devices/functions.web';
 import { MEET_FEATURES } from '../base/jwt/constants';
 import { isJwtFeatureEnabled } from '../base/jwt/functions';
 import { IGUMPendingState } from '../base/media/types';
-import { getLocalParticipant, getRemoteParticipants } from '../base/participants/functions';
-import { IParticipant } from '../base/participants/types';
 import { isScreenMediaShared } from '../screen-share/functions';
 import { isWhiteboardVisible } from '../whiteboard/functions';
 
@@ -253,54 +251,104 @@ export function toCSSTransitionValue(object: ICSSTransitionObject) {
 }
 
 /**
- * Gathers and formats meeting data into a string.
+ * Gathers and formats meeting data into a string, including full attendance and timestamps.
  *
  * @param {IReduxState} state - The Redux state.
  * @returns {string} - The formatted meeting data.
  */
 export function getMeetingDataAsString(state: IReduxState): string {
     const {
-        'features/base/conference': { room },
+        'features/base/conference': { room, conference, conferenceTimestamp },
         'features/chat': { messages },
         'features/polls': { polls }
     } = state;
 
-    const localParticipant = getLocalParticipant(state);
-    const remoteParticipants = getRemoteParticipants(state);
-    const allParticipants: IParticipant[] = [];
+    // Part 1: Get complete participant data from Speaker Stats
+    const speakerStats = conference?.getSpeakerStats();
+    const participantNameMap = new Map<string, string>();
+    const meString = ' (Me)';
+    const localParticipant = state['features/base/participants'].local;
 
-    if (localParticipant) {
-        allParticipants.push(localParticipant);
+
+    if (speakerStats) {
+        for (const userId in speakerStats) {
+            if (speakerStats[userId]) {
+                let displayName = speakerStats[userId].getDisplayName();
+
+                if (speakerStats[userId].isLocalStats()) {
+                    // Ensure the local user's name is consistent and marked
+                    displayName = localParticipant?.name ? `${localParticipant.name}${meString}` : 'Me';
+                }
+                // Store the clean name (without '(Me)') for lookups in chat and polls
+                participantNameMap.set(userId, displayName.replace(meString, ''));
+            }
+        }
     }
-    allParticipants.push(...Array.from(remoteParticipants.values()));
 
-    const participantNameMap = new Map(allParticipants.map(p => [ p.id, p.name ]));
+
+    // Part 2: Format Timestamps and Duration
+    const downloadTime = Date.now();
+    const meetingStartTime = Number(conferenceTimestamp) || downloadTime;
+    const durationMs = downloadTime - meetingStartTime;
+    const durationMinutes = Math.floor(durationMs / 60000);
+    const durationSeconds = Math.round((durationMs % 60000) / 1000);
 
     let dataString = `Meeting Data for: ${room}\n`;
 
-    dataString += `Date: ${new Date().toLocaleString()}\n\n`;
+    dataString += `Downloaded on: ${new Date(downloadTime).toLocaleString()} \n\n`;
 
-    // 1. Format Attendance List
+    dataString += '--- Meeting Timestamps ---\n';
+    dataString += `Start Time: ${new Date(meetingStartTime).toLocaleString()}\n`;
+    dataString += `End Time (at download): ${new Date(downloadTime).toLocaleString()}\n`;
+    dataString += `Meeting Duration: ${durationMinutes} minutes and ${durationSeconds} seconds\n\n`;
+
+
+    // --- Part 3: Format Complete Attendance List ---
     dataString += '--- Attendance ---\n';
-    allParticipants.forEach(p => {
-        const isLocal = p.id === localParticipant?.id;
+    if (speakerStats && Object.keys(speakerStats).length > 0) {
+        Object.values(speakerStats).forEach(statsModel => {
+            let displayName = statsModel.getDisplayName();
+            const hasLeft = statsModel.hasLeft() ? ' (Left)' : '';
 
-        dataString += `${p.name}${isLocal ? ' (Me)' : ''}\n`;
-    });
+            // First, check if this is the local participant and assign their name directly.
+            if (statsModel.isLocalStats()) {
+                displayName = localParticipant?.name ? `${localParticipant.name}${meString}` : 'Me';
+            }
+
+            // Now, if we have a valid display name (either from remote stats or because we just set it for local), add it.
+            if (displayName) {
+                // The local user can't have "Left", so we only append hasLeft for remote users.
+                const finalStatus = statsModel.isLocalStats() ? '' : hasLeft;
+
+                dataString += `${displayName}${finalStatus}\n`;
+            }
+        });
+    } else {
+        dataString += 'No attendance data was available.\n';
+    }
     dataString += '\n';
 
-    // 2. Format Chat History
+
+    // Part 4: Format Chat History using the complete name map
     dataString += '--- Chat History ---\n';
-    messages.forEach(msg => {
-        if (msg.isReaction || msg.privateMessage) return;
-        const displayName = participantNameMap.get((msg as any).participantId) || 'Unknown User';
-        const timestamp = new Date(msg.timestamp).toLocaleTimeString();
 
-        dataString += `[${timestamp}] ${displayName}: ${msg.message}\n`;
-    });
+    const containsNonSystemMessages = messages.every(msg => !msg.messageId);
+
+    if (messages.length > 0 && !containsNonSystemMessages) {
+        messages.forEach(msg => {
+            if (msg.isReaction || msg.privateMessage) return;
+            const chatDisplayName = participantNameMap.get((msg as any).participantId) || 'Unknown User';
+            const timestamp = new Date(msg.timestamp).toLocaleTimeString();
+
+            dataString += `[${timestamp}] ${chatDisplayName}: ${msg.message}\n`;
+        });
+    } else {
+        dataString += 'No chat messages were sent.\n';
+    }
     dataString += '\n';
 
-    // 3. Format Poll Results
+
+    // Part 5: Format Poll Results using the complete name map
     dataString += '--- Polls ---\n';
     if (Object.keys(polls ?? {}).length > 0) {
         Object.values(polls ?? {}).forEach((poll, index) => {
