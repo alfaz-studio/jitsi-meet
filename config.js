@@ -758,7 +758,7 @@ var config = {
 
     // Disable initial browser getUserMedia requests.
     // This is useful for scenarios where users might want to start a conference for screensharing only
-    disableInitialGUM: false,
+    disableInitialGUM: true,
 
     // Enabling the close page will ignore the welcome page redirection when
     // a call is hangup.
