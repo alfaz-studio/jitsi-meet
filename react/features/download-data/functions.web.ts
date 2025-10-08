@@ -1,40 +1,35 @@
 import { IReduxState } from '../app/types';
-import { isLocalParticipantHost, isParticipantModerator, isRemoteParticipantHost } from '../base/participants/functions';
+import { getParticipantById } from '../base/participants/functions';
+
+import { IParticipantLog } from './types';
 
 /**
- * Gathers and formats meeting data into a string with role-based attendance.
+ * Gathers and formats meeting data into a string using the new Redux state for participant history.
+ * This is the first step, focusing only on displaying the plain user list.
  *
  * @param {IReduxState} state - The Redux state.
  * @returns {string} - The formatted meeting data.
  */
 export function getMeetingDataAsString(state: IReduxState): string {
     const {
-        'features/base/conference': { room, conference, conferenceTimestamp },
+        'features/base/conference': { room, conferenceTimestamp },
         'features/chat': { messages },
-        'features/polls': { polls }
+        'features/polls': { polls },
+        'features/download-data': { participants: participantLog }
     } = state;
 
-    // Part 1: Get complete participant data
-    const speakerStats = conference?.getSpeakerStats();
+    // --- Part 1: Build a map for Chat and Polls ---
     const participantNameMap = new Map<string, string>();
-    const localParticipant = state['features/base/participants'].local;
 
-    // Build a map of clean names for use in Chat and Polls sections
-    if (speakerStats && localParticipant) {
-        for (const userId in speakerStats) {
-            const statsModel = speakerStats[userId];
-            const cleanName = statsModel.isLocalStats()
-                ? localParticipant.name
-                : statsModel.getDisplayName() || state['features/base/participants'].remote.get(userId)?.name;
-
-            if (cleanName) {
-                participantNameMap.set(userId, cleanName);
-            }
-        }
+    if (participantLog) {
+        participantLog.forEach((log: IParticipantLog, name: string) => {
+            log.sessions.forEach(session => {
+                participantNameMap.set(session.participantId, name);
+            });
+        });
     }
 
-
-    // Part 2: Format Timestamps, Duration, and Header
+    // --- Part 2: Format Timestamps, Duration, and Header (Unchanged) ---
     const downloadTime = Date.now();
     const meetingStartTime = Number(conferenceTimestamp) || downloadTime;
     const durationMs = downloadTime - meetingStartTime;
@@ -64,73 +59,22 @@ export function getMeetingDataAsString(state: IReduxState): string {
     dataString += `End Time (at download): ${new Date(downloadTime).toLocaleString()}\n`;
     dataString += `Duration: ${durationString}\n\n`;
 
-
-    // --- Part 3: Format Complete Attendance List with (H) and (M) roles (CORRECTED) ---
+    // --- Part 3: Format Attendance List directly from the new Redux state ---
     dataString += '--- Attendance ---\n';
+    if (participantLog && participantLog.size > 0) {
+        // --- FIX IS HERE: Add explicit type for the map's value (log) ---
+        participantLog.forEach((log: IParticipantLog) => {
+            const { name, isPresent } = log;
+            const status = isPresent ? '' : ' (Left)';
 
-    // This map will store the FINAL status of each participant, preventing duplicates.
-    const finalAttendance = new Map<string, { displayName: string; role: string; status: string; }>();
-
-    if (speakerStats && Object.keys(speakerStats).length > 0) {
-        // Step 1: Process speakerStats to determine the final state of each user.
-        for (const userId in speakerStats) {
-            const statsModel = speakerStats[userId];
-            const displayName = participantNameMap.get(userId) || 'Unknown User';
-            const isPresent = !statsModel.hasLeft();
-            const existingEntry = finalAttendance.get(userId);
-
-            // We only update or add an entry if:
-            // 1. The user is currently present (this status overrides any previous 'left' status).
-            // 2. There is no existing entry for this user yet.
-            if (isPresent || !existingEntry) {
-                let roleString = '';
-
-                if (statsModel.isLocalStats()) {
-                    if (localParticipant) {
-                        if (isLocalParticipantHost(state)) {
-                            roleString = '(H)';
-                        } else if (isParticipantModerator(localParticipant)) {
-                            roleString = '(M)';
-                        }
-                    }
-                } else {
-                    const remoteParticipant = state['features/base/participants'].remote.get(userId);
-
-                    if (remoteParticipant) {
-                        if (isRemoteParticipantHost(remoteParticipant)) {
-                            roleString = '(H)';
-                        } else if (isParticipantModerator(remoteParticipant)) {
-                            roleString = '(M)';
-                        }
-                    }
-                }
-
-                finalAttendance.set(userId, {
-                    displayName,
-                    role: roleString,
-                    status: isPresent ? '' : ' (Left)'
-                });
-            }
-        }
-
-        // Step 2: Build the string from the de-duplicated final attendance list.
-        if (finalAttendance.size > 0) {
-            finalAttendance.forEach(p => {
-                const line = `${p.displayName} ${p.role}${p.status}`.replace('  ', ' ').trimEnd();
-
-                dataString += `${line}\n`;
-            });
-        } else {
-            dataString += 'No attendance data was available.\n';
-        }
-
+            dataString += `${name}${status}\n`;
+        });
     } else {
         dataString += 'No attendance data was available.\n';
     }
     dataString += '\n';
 
-
-    // Part 4: Format Chat History
+    // --- Part 4: Format Chat History (Now uses the new, reliable name map) ---
     dataString += '--- Chat History ---\n';
 
     const containsNonSystemMessages = messages.every(msg => !msg.messageId);
@@ -138,7 +82,8 @@ export function getMeetingDataAsString(state: IReduxState): string {
     if (messages.length > 0 && !containsNonSystemMessages) {
         messages.forEach(msg => {
             if (msg.isReaction || msg.privateMessage || msg.messageType === 'system') return;
-            const chatDisplayName = participantNameMap.get((msg as any).participantId) || 'Unknown User';
+            console.log();
+            const chatDisplayName = msg.displayName || 'Unknown User';
             const timestamp = new Date(msg.timestamp).toLocaleTimeString();
 
             dataString += `[${timestamp}] ${chatDisplayName}: ${msg.message}\n`;
@@ -148,16 +93,21 @@ export function getMeetingDataAsString(state: IReduxState): string {
     }
     dataString += '\n';
 
-
-    // Part 5: Format Poll Results
+    // --- Part 5: Format Poll Results ---
     dataString += '--- Polls ---\n';
     if (Object.keys(polls ?? {}).length > 0) {
         Object.values(polls ?? {}).forEach((poll, index) => {
             dataString += `Poll ${index + 1}: ${poll.question}\n`;
             (poll.answers || []).forEach(answer => {
                 const voteCount = answer.voters.length;
+
+                answer.voters.map(voterId => {
+                    const user = getParticipantById(state, voterId);
+
+                    console.log(user);
+                });
                 const voterNames = answer.voters
-                    .map(voterId => participantNameMap.get(voterId) || 'Unknown User')
+                    .map(voterId => getParticipantById(state, voterId)?.name || 'Unknown User')
                     .join(', ');
 
                 dataString += `  - ${answer.name} (${voteCount} votes): [${voterNames}]\n`;
