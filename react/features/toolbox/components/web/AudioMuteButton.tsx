@@ -134,7 +134,7 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {React.ReactNode}
      */
     override render(): React.ReactNode {
-        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+        if (this.state.permissionState === 'denied') {
             this.icon = IconMicWarning;
             this.toggledIcon = IconMicWarning;
         } else {
