@@ -57,6 +57,7 @@ import { default as IconRecordLead } from './lead-record.svg';
 import { default as IconMessage } from './message.svg';
 import { default as IconMeter } from './meter.svg';
 import { default as IconMicSlash } from './mic-slash.svg';
+import { default as IconMicWarning } from './mic-warning.svg';
 import { default as IconMic } from './mic.svg';
 import { default as IconModerator } from './moderator.svg';
 import { default as IconConnectionInactive } from './ninja.svg';
@@ -94,6 +95,7 @@ import { default as IconUserDeleted } from './user-deleted.svg';
 import { default as IconUser } from './user.svg';
 import { default as IconUsers } from './users.svg';
 import { default as IconVideoOff } from './video-off.svg';
+import { default as IconVideoWarning } from './video-warning.svg';
 import { default as IconVideo } from './video.svg';
 import { default as IconAudioOnlyOff } from './visibility-off.svg';
 import { default as IconAudioOnly } from './visibility.svg';
@@ -170,6 +172,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconMeter,
     IconMic,
     IconMicSlash,
+    IconMicWarning,
     IconModerator,
     IconNoiseSuppressionOff,
     IconNoiseSuppressionOn,
@@ -211,6 +214,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconUser,
     IconVideo,
     IconVideoOff,
+    IconVideoWarning,
     IconVolumeOff,
     IconVolumeUp,
     IconWarning,

@@ -19,18 +19,19 @@ import { notifyCameraError, notifyMicError } from '../devices/actions.web';
 import { openDialog } from '../dialog/actions';
 import { JitsiTrackErrors, JitsiTrackEvents, browser } from '../lib-jitsi-meet';
 import { createLocalTrack } from '../lib-jitsi-meet/functions.any';
-import { gumPending, setScreenshareMuted } from '../media/actions';
+import { gumPending, setAudioMuted, setScreenshareMuted, setVideoMuted } from '../media/actions';
 import {
     CAMERA_FACING_MODE,
     MEDIA_TYPE,
     MediaType,
+    VIDEO_MUTISM_AUTHORITY,
     VIDEO_TYPE,
 } from '../media/constants';
 import { IGUMPendingState } from '../media/types';
 import { updateSettings } from '../settings/actions';
 import { IAudioSettings } from '../settings/reducer';
 
-import { addLocalTrack, replaceLocalTrack } from './actions.any';
+import { addLocalTrack, createLocalTracksA, replaceLocalTrack } from './actions.any';
 import AllowToggleCameraDialog from './components/web/AllowToggleCameraDialog';
 import {
     createLocalTracksF,
@@ -39,11 +40,40 @@ import {
     getLocalVideoTrack,
     isToggleCameraEnabled
 } from './functions';
-import { applyAudioConstraints, getLocalJitsiAudioTrackSettings } from './functions.web';
+import { applyAudioConstraints, getLocalJitsiAudioTrackSettings, getLocalTrack } from './functions.web';
 import logger from './logger';
 import { ICreateInitialTracksOptions, IInitialTracksErrors, IShareOptions, IToggleScreenSharingOptions } from './types';
 
 export * from './actions.any';
+
+/**
+ * Requests to unmute a device. If a track for the device exists, it will be unmuted.
+ * If a track does not exist (e.g., permissions were never granted), it will attempt
+ * to create one, which will trigger a permissions prompt.
+ *
+ * @param {'audio' | 'video'} mediaType - The type of device to request.
+ * @returns {Function}
+ */
+export function requestUnmuteDevice(mediaType: 'audio' | 'video') {
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const state = getState();
+        const track = getLocalTrack(state['features/base/tracks'], mediaType);
+
+        if (track) {
+            // If a real track exists and is muted, unmute it.
+            if (track.muted) {
+                if (mediaType === MEDIA_TYPE.AUDIO) {
+                    dispatch(setAudioMuted(false));
+                } else {
+                    dispatch(setVideoMuted(false, VIDEO_MUTISM_AUTHORITY.USER));
+                }
+            }
+        } else {
+            // If no real track exists, always dispatch the action to create one.
+            dispatch(createLocalTracksA({ devices: [ mediaType ] }));
+        }
+    };
+}
 
 /**
  * Signals that the local participant is ending screensharing or beginning the screensharing flow.
