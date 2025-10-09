@@ -2,15 +2,7 @@ import { CONFERENCE_JOINED, CONFERENCE_LEFT } from '../base/conference/actionTyp
 import { PARTICIPANT_JOINED, PARTICIPANT_LEFT } from '../base/participants/actionTypes';
 import ReducerRegistry from '../base/redux/ReducerRegistry';
 
-import { IParticipantLog, IParticipantSession } from './types';
-
-
-export interface IDownloadDataState {
-    isRecording: boolean;
-    localParticipant: IParticipantLog | null;
-    participants: Map<string, IParticipantLog>;
-}
-
+import { IDownloadDataState, IParticipantLog, IParticipantSession } from './types';
 
 const INITIAL_STATE: IDownloadDataState = {
     participants: new Map(),

@@ -9,3 +9,9 @@ export interface IParticipantLog {
     name: string;
     sessions: IParticipantSession[];
 }
+
+export interface IDownloadDataState {
+    isRecording: boolean;
+    localParticipant: IParticipantLog | null;
+    participants: Map<string, IParticipantLog>;
+}
