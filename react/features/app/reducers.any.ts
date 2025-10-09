@@ -27,7 +27,6 @@ import '../calendar-sync/reducer';
 import '../chat/reducer';
 import '../deep-linking/reducer';
 import '../dropbox/reducer';
-import '../download-data/reducer';
 import '../dynamic-branding/reducer';
 import '../etherpad/reducer';
 import '../filmstrip/reducer';

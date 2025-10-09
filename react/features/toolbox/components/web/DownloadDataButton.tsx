@@ -1,12 +1,12 @@
 import { WithTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 
-import { IReduxState, IStore } from '../../app/types';
-import { translate } from '../../base/i18n/functions';
-import { IconDownload } from '../../base/icons/svg';
-import { isLocalParticipantModerator } from '../../base/participants/functions';
-import AbstractButton from '../../base/toolbox/components/AbstractButton';
-import { downloadMeetingData } from '../functions.web';
+import { IReduxState, IStore } from '../../../app/types';
+import { translate } from '../../../base/i18n/functions';
+import { IconDownload } from '../../../base/icons/svg';
+import { isLocalParticipantModerator } from '../../../base/participants/functions';
+import AbstractButton from '../../../base/toolbox/components/AbstractButton';
+import { downloadMeetingData } from '../../functions.web';
 
 /**
  * The type of the React {@code Component} props of {@link DownloadDataButton}.
