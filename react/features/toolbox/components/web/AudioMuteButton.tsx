@@ -7,7 +7,6 @@ import { sendAnalytics } from '../../../analytics/functions';
 import { IReduxState } from '../../../app/types';
 import { translate } from '../../../base/i18n/functions';
 import { IconMic, IconMicSlash, IconMicWarning } from '../../../base/icons/svg';
-import { MEDIA_TYPE } from '../../../base/media/constants';
 import { IGUMPendingState } from '../../../base/media/types';
 import { requestUnmuteDevice } from '../../../base/tracks/actions.web';
 import Spinner from '../../../base/ui/components/web/Spinner';
@@ -18,7 +17,6 @@ import AbstractAudioMuteButton, {
     IProps as AbstractAudioMuteButtonProps,
     mapStateToProps as abstractMapStateToProps
 } from '../AbstractAudioMuteButton';
-
 
 const styles = () => {
     return {
@@ -67,12 +65,20 @@ interface IState {
  * @augments AbstractAudioMuteButton
  */
 class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
+
+    /**
+     * Initializes a new {@code AudioMuteButton} instance.
+     *
+     * @param {IProps} props - The read-only React {@code Component} props with
+     * which the new instance is to be initialized.
+     */
+
     /**
      * The internal state of the component.
      *
      * @inheritdoc
      */
-    public readonly state: IState = {
+    public override readonly state: IState = {
         permissionState: 'prompt',
         showGuide: false,
     };
@@ -99,7 +105,6 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {void}
      */
     override async componentDidMount() {
-        super.componentDidMount?.();
         this.props.dispatch(
             registerShortcut({
                 character: 'M',
@@ -119,8 +124,13 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
         }
     }
 
+    /**
+     * Unregisters the keyboard shortcut that toggles the audio muting.
+     *
+     * @inheritdoc
+     * @returns {void}
+     */
     override componentWillUnmount() {
-        super.componentWillUnmount?.();
         this.props.dispatch(unregisterShortcut('M'));
         if (this._permissionStatus) {
             this._permissionStatus.onchange = null;
@@ -152,6 +162,68 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
     }
 
     /**
+     * Gets the current accessibility label, taking the toggled and GUM pending state into account. If no toggled label
+     * is provided, the regular accessibility label will also be used in the toggled state.
+     *
+     * The accessibility label is not visible in the UI, it is meant to be used by assistive technologies, mainly screen
+     * readers.
+     *
+     * @private
+     * @returns {string}
+     */
+    override _getAccessibilityLabel() {
+        if (this.state.permissionState === 'denied') {
+            return 'toolbar.micPermissionDenied';
+        }
+        const { _gumPending } = this.props;
+
+        if (_gumPending === IGUMPendingState.NONE) {
+            return super._getAccessibilityLabel();
+        }
+
+        return 'toolbar.accessibilityLabel.muteGUMPending';
+    }
+
+    /**
+     * Gets the current label, taking the toggled and GUM pending state into account. If no
+     * toggled label is provided, the regular label will also be used in the toggled state.
+     *
+     * @private
+     * @returns {string}
+     */
+    override _getLabel() {
+        if (this.state.permissionState === 'denied') {
+            return 'toolbar.micPermissionDenied';
+        }
+        const { _gumPending } = this.props;
+
+        if (_gumPending === IGUMPendingState.NONE) {
+            return super._getLabel();
+        }
+
+        return 'toolbar.muteGUMPending';
+    }
+
+    /**
+     * Indicates if audio is currently muted or not.
+     *
+     * @override
+     * @protected
+     * @returns {boolean}
+     */
+    override _isAudioMuted() {
+        if (this.state.permissionState === 'denied') {
+            return true;
+        }
+        if (this.props._gumPending === IGUMPendingState.PENDING_UNMUTE) {
+            return false;
+        }
+
+        return super._isAudioMuted();
+    }
+
+
+    /**
      * Handles clicking the button.
      *
      * @override
@@ -170,7 +242,7 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
             } else {
                 // If permission is 'prompt' (or 'granted' but muted), we request the device.
                 // This will trigger the browser's GUM prompt.
-                this.props.dispatch(requestUnmuteDevice(MEDIA_TYPE.AUDIO));
+                this.props.dispatch(requestUnmuteDevice('audio'));
             }
         } else {
             // The button is unmuted, so the user wants to mute it.
@@ -188,18 +260,15 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
         this.setState({ showGuide: false });
     }
 
-    override _isAudioMuted() {
-        if (this.state.permissionState === 'denied') {
-            return true;
-        }
-        if (this.props._gumPending === IGUMPendingState.PENDING_UNMUTE) {
-            return false;
-        }
-
-        return super._isAudioMuted();
-    }
-
+    /**
+     * Creates an analytics keyboard shortcut event and dispatches an action to
+     * toggle the audio muting.
+     *
+     * @private
+     * @returns {void}
+     */
     _onKeyboardShortcut() {
+        // Ignore keyboard shortcuts if the audio button is disabled.
         if (this._isDisabled()) {
             return;
         }
@@ -213,46 +282,37 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
         }
     }
 
-    override _getLabel() {
-        if (this.state.permissionState === 'denied') {
-            return 'toolbar.micPermissionDenied';
-        }
-        const { _gumPending } = this.props;
-
-        if (_gumPending !== IGUMPendingState.NONE) {
-            return 'toolbar.muteGUMPending';
-        }
-
-        return super._getLabel();
-    }
-
-    override _getAccessibilityLabel() {
-        if (this.state.permissionState === 'denied') {
-            return 'toolbar.accessibilityLabel.micPermissionDenied';
-        }
-        const { _gumPending } = this.props;
-
-        if (_gumPending !== IGUMPendingState.NONE) {
-            return 'toolbar.accessibilityLabel.muteGUMPending';
-        }
-
-        return super._getAccessibilityLabel();
-    }
-
+    /**
+     * Returns a spinner if there is pending GUM.
+     *
+     * @returns {ReactElement | null}
+     */
     override _getElementAfter(): ReactElement | null {
         const { _gumPending } = this.props;
         const classes = withStyles.getClasses(this.props);
 
-        return _gumPending === IGUMPendingState.NONE ? null : (
-            <div className = { classes.pendingContainer }>
-                <Spinner
-                    color = { SPINNER_COLOR }
-                    size = 'small' />
-            </div>
-        );
+        return _gumPending === IGUMPendingState.NONE ? null
+            : (
+                <div className = { classes.pendingContainer }>
+                    <Spinner
+                        color = { SPINNER_COLOR }
+                        size = 'small' />
+                </div>
+            );
     }
 }
 
+/**
+ * Maps (parts of) the redux state to the associated props for the
+ * {@code AudioMuteButton} component.
+ *
+ * @param {Object} state - The Redux state.
+ * @private
+ * @returns {{
+ *     _audioMuted: boolean,
+ *     _disabled: boolean
+ * }}
+ */
 function _mapStateToProps(state: IReduxState) {
     const { gumPending } = state['features/base/media'].audio;
 

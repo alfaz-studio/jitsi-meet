@@ -209,8 +209,9 @@ var config = {
     startAudioOnly: false,
 
     // Every participant after the Nth will start audio muted.
-    // startAudioMuted: 2,
-    ignoreStartMuted: true,
+    startAudioMuted: 2,
+
+    // ignoreStartMuted: true,
 
     // Start calls with audio muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
@@ -1742,9 +1743,9 @@ var config = {
      websocketKeepAlive
      websocketKeepAliveUrl
      */
-    flags: {
-        ssrcRewritingEnabled: false
-    },
+    // flags: {
+    //     ssrcRewritingEnabled: false
+    // },
 
     /**
      * Default interval (milliseconds) for triggering mouseMoved iframe API event

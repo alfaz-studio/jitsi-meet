@@ -7,7 +7,6 @@ import { sendAnalytics } from '../../../analytics/functions';
 import { IReduxState } from '../../../app/types';
 import { translate } from '../../../base/i18n/functions';
 import { IconVideo, IconVideoOff, IconVideoWarning } from '../../../base/icons/svg';
-import { MEDIA_TYPE } from '../../../base/media/constants';
 import { IGUMPendingState } from '../../../base/media/types';
 import { requestUnmuteDevice } from '../../../base/tracks/actions.web';
 import Spinner from '../../../base/ui/components/web/Spinner';
@@ -18,7 +17,6 @@ import AbstractVideoMuteButton, {
     IProps as AbstractVideoMuteButtonProps,
     mapStateToProps as abstractMapStateToProps
 } from '../AbstractVideoMuteButton';
-
 
 const styles = () => {
     return {
@@ -72,9 +70,9 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      *
      * @inheritdoc
      */
-    public readonly state: IState = {
+    public override readonly state: IState = {
         permissionState: 'prompt',
-        showGuide: false
+        showGuide: false,
     };
 
     /**
@@ -105,8 +103,6 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {void}
      */
     override async componentDidMount() {
-        super.componentDidMount?.();
-
         this.props.dispatch(registerShortcut({
             character: 'V',
             helpDescription: 'keyboardShortcuts.videoMute',
@@ -131,8 +127,6 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {void}
      */
     override componentWillUnmount() {
-        super.componentWillUnmount?.();
-
         this.props.dispatch(unregisterShortcut('V'));
 
         if (this._permissionStatus) {
@@ -165,6 +159,51 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
     }
 
     /**
+     * Gets the current accessibility label, taking the toggled and GUM pending state into account. If no toggled label
+     * is provided, the regular accessibility label will also be used in the toggled state.
+     *
+     * The accessibility label is not visible in the UI, it is meant to be used by assistive technologies, mainly screen
+     * readers.
+     *
+     * @private
+     * @returns {string}
+     */
+    override _getAccessibilityLabel() {
+        if (this.state.permissionState === 'denied') {
+            return 'toolbar.cameraPermissionDenied';
+        }
+
+        const { _gumPending } = this.props;
+
+        if (_gumPending === IGUMPendingState.NONE) {
+            return super._getAccessibilityLabel();
+        }
+
+        return 'toolbar.accessibilityLabel.videomuteGUMPending';
+    }
+
+    /**
+     * Gets the current label, taking the toggled and GUM pending state into account. If no
+     * toggled label is provided, the regular label will also be used in the toggled state.
+     *
+     * @private
+     * @returns {string}
+     */
+    override _getLabel() {
+        if (this.state.permissionState === 'denied') {
+            return 'toolbar.cameraPermissionDenied';
+        }
+
+        const { _gumPending } = this.props;
+
+        if (_gumPending === IGUMPendingState.NONE) {
+            return super._getLabel();
+        }
+
+        return super._getLabel();
+    }
+
+    /**
      * Handles clicking the button.
      *
      * @override
@@ -181,7 +220,7 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
                 this.setState({ showGuide: true });
             } else {
                 // If permission is 'prompt', we request the device.
-                this.props.dispatch(requestUnmuteDevice(MEDIA_TYPE.VIDEO));
+                this.props.dispatch(requestUnmuteDevice('video'));
             }
         } else {
             // The button is unmuted, so the user wants to mute it.
@@ -219,6 +258,25 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
     }
 
     /**
+     * Returns a spinner if there is pending GUM.
+     *
+     * @returns {ReactElement | null}
+     */
+    override _getElementAfter(): ReactElement | null {
+        const { _gumPending } = this.props;
+        const classes = withStyles.getClasses(this.props);
+
+        return _gumPending === IGUMPendingState.NONE ? null
+            : (
+                <div className = { classes.pendingContainer }>
+                    <Spinner
+                        color = { SPINNER_COLOR }
+                        size = 'small' />
+                </div>
+            );
+    }
+
+    /**
      * Creates an analytics keyboard shortcut event and dispatches an action to
      * toggle the video muting.
      *
@@ -226,6 +284,7 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {void}
      */
     _onKeyboardShortcut() {
+        // Ignore keyboard shortcuts if the video button is disabled.
         if (this._isDisabled()) {
             return;
         }
@@ -249,65 +308,6 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
         if (this._permissionStatus) {
             this.setState({ permissionState: this._permissionStatus.state });
         }
-    }
-
-    /**
-     * Gets the current label, taking the toggled and GUM pending state into account.
-     *
-     * @private
-     * @returns {string}
-     */
-    override _getLabel() {
-        if (this.state.permissionState === 'denied') {
-            return 'toolbar.cameraPermissionDenied';
-        }
-
-        const { _gumPending } = this.props;
-
-        if (_gumPending !== IGUMPendingState.NONE) {
-            return 'toolbar.videomuteGUMPending';
-        }
-
-        return super._getLabel();
-    }
-
-    /**
-     * Gets the current accessibility label, taking the toggled and GUM pending state into account.
-     *
-     * @private
-     * @returns {string}
-     */
-    override _getAccessibilityLabel() {
-        if (this.state.permissionState === 'denied') {
-            return 'toolbar.accessibilityLabel.cameraPermissionDenied';
-        }
-
-        const { _gumPending } = this.props;
-
-        if (_gumPending !== IGUMPendingState.NONE) {
-            return 'toolbar.accessibilityLabel.videomuteGUMPending';
-        }
-
-        return super._getAccessibilityLabel();
-    }
-
-    /**
-     * Returns a spinner if there is pending GUM.
-     *
-     * @returns {ReactElement | null}
-     */
-    override _getElementAfter(): ReactElement | null {
-        const { _gumPending } = this.props;
-        const classes = withStyles.getClasses(this.props);
-
-        return _gumPending === IGUMPendingState.NONE ? null
-            : (
-                <div className = { classes.pendingContainer }>
-                    <Spinner
-                        color = { SPINNER_COLOR }
-                        size = 'small' />
-                </div>
-            );
     }
 }
 
