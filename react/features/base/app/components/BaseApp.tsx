@@ -89,11 +89,6 @@ export default class BaseApp<P> extends Component<P, IState> {
          */
         this._init = Promise.withResolvers();
 
-        const url = window.location.pathname;
-        const roomName = url.replace(/^\//, '');
-
-        window.name = roomName;
-
         try {
             await this._initStorage();
 
