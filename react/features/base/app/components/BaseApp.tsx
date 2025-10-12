@@ -8,6 +8,8 @@ import { compose, createStore } from 'redux';
 import Thunk from 'redux-thunk';
 
 import { IStore } from '../../../app/types';
+import DuplicateTabDialog from '../../../prejoin/components/web/dialogs/DuplicateTabDialog';
+import { openDialog } from '../../dialog/actions';
 import i18next from '../../i18n/i18next';
 import MiddlewareRegistry from '../../redux/MiddlewareRegistry';
 import PersistenceRegistry from '../../redux/PersistenceRegistry';
@@ -47,6 +49,14 @@ export default class BaseApp<P> extends Component<P, IState> {
     _init: PromiseWithResolvers<any>;
 
     /**
+     * Handles communication between different browser tabs of the same Jitsi Meet instance
+     * to detect and manage duplicate tabs in the same conference.
+     *
+     * @type {BroadcastChannel}
+     */
+    _broadcastChannel: BroadcastChannel;
+
+    /**
      * Initializes a new {@code BaseApp} instance.
      *
      * @param {Object} props - The read-only React {@code Component} props with
@@ -59,6 +69,8 @@ export default class BaseApp<P> extends Component<P, IState> {
             route: {},
             store: undefined
         };
+
+        this._broadcastChannel = new BroadcastChannel('jitsi-meet-duplicate-tab');
     }
 
     /**
@@ -76,6 +88,11 @@ export default class BaseApp<P> extends Component<P, IState> {
          * @type {Promise}
          */
         this._init = Promise.withResolvers();
+
+        const url = window.location.pathname;
+        const roomName = url.replace(/^\//, '');
+
+        window.name = roomName;
 
         try {
             await this._initStorage();
@@ -99,6 +116,30 @@ export default class BaseApp<P> extends Component<P, IState> {
 
         // @ts-ignore
         this._init.resolve();
+
+        this._broadcastChannel.onmessage = event => {
+            const state = this.state.store?.getState();
+
+            if (event.data === 'is-duplicate') {
+                this.state.store?.dispatch(
+                    openDialog(DuplicateTabDialog, {
+                        broadcastChannel: this._broadcastChannel,
+                    })
+                );
+            } else if (event.data === 'check-duplicate') {
+                if (state?.['features/base/conference'].conference) {
+                    this._broadcastChannel.postMessage('is-duplicate');
+                }
+            } else if (event.data === 'focus-tab') {
+                // Only act on the focus request if this tab is actually in a meeting.
+                if (state?.['features/base/conference'].conference) {
+                    alert('This is the tab with your active meeting.');
+                    window.focus();
+                }
+            }
+        };
+
+        this._broadcastChannel.postMessage('check-duplicate');
     }
 
     /**
@@ -108,6 +149,7 @@ export default class BaseApp<P> extends Component<P, IState> {
      */
     override componentWillUnmount() {
         this.state.store?.dispatch(appWillUnmount(this));
+        this._broadcastChannel.close();
     }
 
     /**
