@@ -358,7 +358,7 @@ export function getMeetingDataAsString(state: IReduxState): string {
                 finalAttendance.set(userId, {
                     displayName,
                     role: roleString,
-                    status: isPresent ? '' : ' (Left)'
+                    status: isPresent ? '' : ''
                 });
             }
         }
