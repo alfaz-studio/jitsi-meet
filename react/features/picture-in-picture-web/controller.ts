@@ -153,7 +153,7 @@ class WebPipController {
             this.bindAudioLevelListener(state, participant.id);
         }
 
-        if (track?.jitsiTrack) {
+        if (track?.jitsiTrack && !track.muted) {
             // Draw from the already-rendered stage video element if possible, to avoid extra decoder costs.
             const stageVideo = document.getElementById('largeVideo') as HTMLVideoElement | null;
 
