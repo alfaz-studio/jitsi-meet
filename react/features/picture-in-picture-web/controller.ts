@@ -257,16 +257,7 @@ class WebPipController {
             title: participant?.name || 'Video Conference',
         });
 
-        // @ts-ignore
-        navigator.mediaSession.setActionHandler('togglecamera', () => {
-            const currentState = getState();
-            const isVideoMuted = isLocalTrackMuted(currentState['features/base/tracks'], MEDIA_TYPE.VIDEO);
-
-            this.dispatch?.(muteLocal(!isVideoMuted, MEDIA_TYPE.VIDEO));
-
-            navigator.mediaSession.setCameraActive(isVideoMuted);
-        });
-
+        // Toggle Microphone
         // @ts-ignore
         navigator.mediaSession.setActionHandler('togglemicrophone', () => {
             const currentState = getState();
@@ -274,9 +265,21 @@ class WebPipController {
 
             this.dispatch?.(muteLocal(!isAudioMuted, MEDIA_TYPE.AUDIO));
 
-            navigator.mediaSession.setMicrophoneActive(isAudioMuted);
+            (navigator.mediaSession as any).setMicrophoneActive(isAudioMuted);
         });
 
+        // Toggle Camera
+        // @ts-ignore
+        navigator.mediaSession.setActionHandler('togglecamera', () => {
+            const currentState = getState();
+            const isVideoMuted = isLocalTrackMuted(currentState['features/base/tracks'], MEDIA_TYPE.VIDEO);
+
+            this.dispatch?.(muteLocal(!isVideoMuted, MEDIA_TYPE.VIDEO));
+
+            (navigator.mediaSession as any).setCameraActive(isVideoMuted);
+        });
+
+        // Hangup
         // @ts-ignore
         navigator.mediaSession.setActionHandler('hangup', () => {
             console.log('User clicked "hang up" in PiP');
@@ -284,15 +287,14 @@ class WebPipController {
             this.exit(); // Exit PiP on hangup
         });
 
-
-        // This section sets the INITIAL state of the icons when PiP opens.
+        // Set initial state in PiP controls
         try {
             const tracksState = state['features/base/tracks'];
             const initialAudioMuted = isLocalTrackMuted(tracksState, MEDIA_TYPE.AUDIO);
             const initialVideoMuted = isLocalTrackMuted(tracksState, MEDIA_TYPE.VIDEO);
 
-            navigator.mediaSession.setMicrophoneActive(!initialAudioMuted);
-            navigator.mediaSession.setCameraActive(!initialVideoMuted);
+            (navigator.mediaSession as any).setMicrophoneActive(!initialAudioMuted);
+            (navigator.mediaSession as any).setCameraActive(!initialVideoMuted);
         } catch (error) {
             console.warn('Failed to set initial media session mute state', error);
         }
