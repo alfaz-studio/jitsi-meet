@@ -222,7 +222,7 @@ class WebPipController {
                 .join('')
                 .toUpperCase()
                 .slice(0, 2) || '?';
-        const customAvatarBackgrounds = state['features/base/config'].customAvatarBackgrounds || [];
+        const customAvatarBackgrounds = state['features/dynamic-branding'].avatarBackgrounds || [];
         const bgColor = getAvatarColor(initialsOnly, customAvatarBackgrounds);
 
         ctx.fillStyle = bgColor || '#22242A';
@@ -257,7 +257,7 @@ class WebPipController {
             title: participant?.name || 'Video Conference',
         });
 
-
+        // @ts-ignore
         navigator.mediaSession.setActionHandler('togglecamera', () => {
             const currentState = getState();
             const isVideoMuted = isLocalTrackMuted(currentState['features/base/tracks'], MEDIA_TYPE.VIDEO);
@@ -267,6 +267,7 @@ class WebPipController {
             navigator.mediaSession.setCameraActive(isVideoMuted);
         });
 
+        // @ts-ignore
         navigator.mediaSession.setActionHandler('togglemicrophone', () => {
             const currentState = getState();
             const isAudioMuted = isLocalTrackMuted(currentState['features/base/tracks'], MEDIA_TYPE.AUDIO);
@@ -276,6 +277,7 @@ class WebPipController {
             navigator.mediaSession.setMicrophoneActive(isAudioMuted);
         });
 
+        // @ts-ignore
         navigator.mediaSession.setActionHandler('hangup', () => {
             console.log('User clicked "hang up" in PiP');
             this.dispatch?.(leaveConference());
@@ -309,8 +311,11 @@ class WebPipController {
         }
 
         navigator.mediaSession.metadata = null;
+        // @ts-ignore
         navigator.mediaSession.setActionHandler('togglecamera', null);
+        // @ts-ignore
         navigator.mediaSession.setActionHandler('togglemicrophone', null);
+        // @ts-ignore
         navigator.mediaSession.setActionHandler('hangup', null);
     }
 

@@ -26,8 +26,7 @@ MiddlewareRegistry.register((store: IStore) => {
         const { conference } = state['features/base/conference'];
         const { inPip } = state['features/picture-in-picture-web'] || {};
 
-        // Check for a config flag to enable/disable this feature. Defaults to true if not set.
-        const autoPipEnabled = state['features/base/config'].autoPip ?? true;
+        const autoPipEnabled = true;
 
         // Only toggle PiP if the feature is enabled and we are in a conference.
         if (!conference || !autoPipEnabled) {
