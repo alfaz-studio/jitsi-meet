@@ -36,7 +36,7 @@ export function toggleWebPip() {
         }
 
         // Keep synchronous chain minimal to satisfy user gesture requirements.
-        await controller.enter(getState);
+        await controller.enter(getState, dispatch);
         dispatch(webPipEntered());
     };
 }
