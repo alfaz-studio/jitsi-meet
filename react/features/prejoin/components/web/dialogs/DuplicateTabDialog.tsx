@@ -29,9 +29,6 @@ const DuplicateTabDialog = ({ broadcastChannel }: IProps) => {
 
     return (
         <Dialog
-            ok = {{
-                translationKey: 'prejoin.switchToTab'
-            }}
             onCancel = { onCancel }
             onSubmit = { onSwitchToTab }
             titleKey = 'prejoin.duplicateTabTitle'>

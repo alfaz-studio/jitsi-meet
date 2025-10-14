@@ -126,10 +126,8 @@ export default class BaseApp<P> extends Component<P, IState> {
                     this._broadcastChannel.postMessage('is-duplicate');
                 }
             } else if (event.data === 'focus-tab') {
-                // Only act on the focus request if this tab is actually in a meeting.
                 if (state?.['features/base/conference'].conference) {
                     alert('This is the tab with your active meeting.');
-                    window.focus();
                 }
             }
         };
