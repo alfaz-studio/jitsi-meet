@@ -2,11 +2,11 @@ import { IReduxState, IStore } from '../app/types';
 import { getAvatarColor } from '../base/avatar/functions';
 import { leaveConference } from '../base/conference/actions.any';
 import JitsiMeetJS from '../base/lib-jitsi-meet/_';
-import { MEDIA_TYPE } from '../base/media/constants';
+import { setAudioMuted, setVideoMuted } from '../base/media/actions';
+import { MEDIA_TYPE, VIDEO_MUTISM_AUTHORITY } from '../base/media/constants';
 import { getParticipantById } from '../base/participants/functions';
 import { getVideoTrackByParticipant, isLocalTrackMuted } from '../base/tracks/functions.any';
 import { getLargeVideoParticipant } from '../large-video/functions';
-import { muteLocal } from '../video-menu/actions.any';
 
 type GetState = () => IReduxState;
 
@@ -246,7 +246,7 @@ class WebPipController {
      * @returns {void}
      */
     private setupMediaSession(getState: GetState) {
-        if (!('mediaSession' in navigator)) {
+        if (!('mediaSession' in navigator) || !this.dispatch) {
             return;
         }
 
@@ -257,32 +257,28 @@ class WebPipController {
             title: participant?.name || 'Video Conference',
         });
 
+        const mediaSession = navigator.mediaSession as any;
+
         // Toggle Microphone
-        // @ts-ignore
-        navigator.mediaSession.setActionHandler('togglemicrophone', () => {
+        mediaSession.setActionHandler('togglemicrophone', () => {
             const currentState = getState();
-            const isAudioMuted = isLocalTrackMuted(currentState['features/base/tracks'], MEDIA_TYPE.AUDIO);
+            const tracks = currentState['features/base/tracks'];
+            const isAudioMuted = isLocalTrackMuted(tracks, MEDIA_TYPE.AUDIO);
 
-            this.dispatch?.(muteLocal(!isAudioMuted, MEDIA_TYPE.AUDIO));
-
-            (navigator.mediaSession as any).setMicrophoneActive(isAudioMuted);
+            this.dispatch?.(setAudioMuted(!isAudioMuted, true));
         });
 
         // Toggle Camera
-        // @ts-ignore
-        navigator.mediaSession.setActionHandler('togglecamera', () => {
+        mediaSession.setActionHandler('togglecamera', () => {
             const currentState = getState();
-            const isVideoMuted = isLocalTrackMuted(currentState['features/base/tracks'], MEDIA_TYPE.VIDEO);
+            const tracks = currentState['features/base/tracks'];
+            const isVideoMuted = isLocalTrackMuted(tracks, MEDIA_TYPE.VIDEO);
 
-            this.dispatch?.(muteLocal(!isVideoMuted, MEDIA_TYPE.VIDEO));
-
-            (navigator.mediaSession as any).setCameraActive(isVideoMuted);
+            this.dispatch?.(setVideoMuted(!isVideoMuted, VIDEO_MUTISM_AUTHORITY.USER, true));
         });
 
         // Hangup
-        // @ts-ignore
-        navigator.mediaSession.setActionHandler('hangup', () => {
-            console.log('User clicked "hang up" in PiP');
+        mediaSession.setActionHandler('hangup', () => {
             this.dispatch?.(leaveConference());
             this.exit(); // Exit PiP on hangup
         });
@@ -293,13 +289,12 @@ class WebPipController {
             const initialAudioMuted = isLocalTrackMuted(tracksState, MEDIA_TYPE.AUDIO);
             const initialVideoMuted = isLocalTrackMuted(tracksState, MEDIA_TYPE.VIDEO);
 
-            (navigator.mediaSession as any).setMicrophoneActive(!initialAudioMuted);
-            (navigator.mediaSession as any).setCameraActive(!initialVideoMuted);
+            mediaSession.setMicrophoneActive(!initialAudioMuted);
+            mediaSession.setCameraActive(!initialVideoMuted);
         } catch (error) {
             console.warn('Failed to set initial media session mute state', error);
         }
     }
-
 
     /**
      * Clears all Media Session API metadata and action handlers.

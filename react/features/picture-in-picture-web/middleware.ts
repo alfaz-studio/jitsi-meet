@@ -1,18 +1,43 @@
-// middleware.ts
-
 import { IStore } from '../app/types';
 import { CONFERENCE_JOINED, CONFERENCE_LEFT } from '../base/conference/actionTypes';
+import { SET_AUDIO_MUTED, SET_VIDEO_MUTED } from '../base/media/actionTypes';
+import { MEDIA_TYPE } from '../base/media/constants';
 import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
+import { TRACK_UPDATED } from '../base/tracks/actionTypes';
+import { isLocalTrackMuted } from '../base/tracks/functions.any';
 
-import { toggleWebPip } from './actions';
+import { WEB_PIP_ENTERED, toggleWebPip } from './actions';
 import controller from './controller';
 
 /**
- * A Redux middleware that manages the automatic opening and closing of Picture-in-Picture
- * based on the page's visibility state.
+ * A helper function to synchronize the PiP window's control icons with the app's Redux state.
  *
  * @param {Store} store - The Redux store.
- * @returns {Function}
+ * @returns {void}
+ */
+const _syncPipControls = (store: IStore) => {
+    const state = store.getState();
+
+    // Only run the sync logic if the PiP window is actually active.
+    if (state['features/picture-in-picture-web']?.inPip) {
+        const tracks = state['features/base/tracks'];
+        const isAudioMuted = isLocalTrackMuted(tracks, MEDIA_TYPE.AUDIO);
+        const isVideoMuted = isLocalTrackMuted(tracks, MEDIA_TYPE.VIDEO);
+        const mediaSession = navigator.mediaSession as any;
+
+        console.log('audio change', 'isAudioMuted', isAudioMuted);
+        try {
+            // Update the PiP icons to match the new Redux state.
+            mediaSession.setMicrophoneActive(!isAudioMuted);
+            mediaSession.setCameraActive(!isVideoMuted);
+        } catch (error) {
+            console.warn('Failed to sync media session state', error);
+        }
+    }
+};
+
+/**
+ * A Redux middleware that manages Picture-in-Picture (PiP) behavior.
  */
 MiddlewareRegistry.register((store: IStore) => {
     /**
@@ -43,6 +68,7 @@ MiddlewareRegistry.register((store: IStore) => {
     };
 
     return next => action => {
+        // First, let the action pass through to update the state.
         const result = next(action);
 
         switch (action.type) {
@@ -61,6 +87,15 @@ MiddlewareRegistry.register((store: IStore) => {
             if (inPip) {
                 controller.exit();
             }
+            break;
+        }
+
+        case WEB_PIP_ENTERED:
+        case TRACK_UPDATED:
+        case SET_AUDIO_MUTED:
+        case SET_VIDEO_MUTED:
+        {
+            _syncPipControls(store);
             break;
         }
         }
