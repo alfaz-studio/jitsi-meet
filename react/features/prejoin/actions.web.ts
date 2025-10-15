@@ -39,6 +39,7 @@ import {
     isJoinByPhoneDialogVisible
 } from './functions.any';
 import logger from './logger';
+import { getStatusFromErrors } from './reducer';
 
 const dialOutStatusToKeyMap = {
     INITIATED: 'presenceStatus.calling',
@@ -353,6 +354,25 @@ export function replaceVideoTrackById(deviceId: string) {
 }
 
 /**
+ * An action that checks the current permissions and device errors and updates the device status accordingly.
+ *
+ * @param {Object} errors - The device errors, if any.
+ * @returns {Function}
+ */
+export function setDeviceStatusFromSrc(errors: Object = {}) {
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const state = getState();
+        const newStatus = getStatusFromErrors(errors, state);
+
+        if (newStatus.deviceStatusType === 'ok') {
+            dispatch(setDeviceStatusOk(newStatus.deviceStatusText));
+        } else {
+            dispatch(setDeviceStatusWarning(newStatus.deviceStatusText));
+        }
+    };
+}
+
+/**
  * Sets the device status as OK with the corresponding text.
  *
  * @param {string} deviceStatusText - The text to be set.
@@ -457,9 +477,14 @@ export function setJoinByPhoneDialogVisiblity(value: boolean) {
  * @returns {Object}
  */
 export function setPrejoinDeviceErrors(value: Object) {
-    return {
-        type: SET_PREJOIN_DEVICE_ERRORS,
-        value
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const state = getState();
+
+        dispatch({
+            type: SET_PREJOIN_DEVICE_ERRORS,
+            value,
+            state
+        });
     };
 }
 

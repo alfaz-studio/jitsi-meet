@@ -141,7 +141,7 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {React.ReactNode}
      */
     override render(): React.ReactNode {
-        if (this.state.permissionState === 'denied') {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
             this.icon = IconVideoWarning;
             this.toggledIcon = IconVideoWarning;
         } else {
@@ -169,7 +169,7 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {string}
      */
     override _getAccessibilityLabel() {
-        if (this.state.permissionState === 'denied') {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
             return 'toolbar.cameraPermissionDenied';
         }
 
@@ -190,7 +190,7 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {string}
      */
     override _getLabel() {
-        if (this.state.permissionState === 'denied') {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
             return 'toolbar.cameraPermissionDenied';
         }
 

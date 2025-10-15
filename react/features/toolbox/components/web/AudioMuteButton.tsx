@@ -144,7 +144,7 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {React.ReactNode}
      */
     override render(): React.ReactNode {
-        if (this.state.permissionState === 'denied') {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
             this.icon = IconMicWarning;
             this.toggledIcon = IconMicWarning;
         } else {
@@ -172,7 +172,7 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {string}
      */
     override _getAccessibilityLabel() {
-        if (this.state.permissionState === 'denied') {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
             return 'toolbar.micPermissionDenied';
         }
         const { _gumPending } = this.props;
@@ -192,7 +192,7 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {string}
      */
     override _getLabel() {
-        if (this.state.permissionState === 'denied') {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
             return 'toolbar.micPermissionDenied';
         }
         const { _gumPending } = this.props;
