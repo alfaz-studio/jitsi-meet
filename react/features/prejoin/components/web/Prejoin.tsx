@@ -1,12 +1,11 @@
 /* eslint-disable react/jsx-no-bind */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useDispatch } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
 import { IReduxState } from '../../../app/types';
 import Avatar from '../../../base/avatar/components/Avatar';
-import { openDialog } from '../../../base/dialog/actions';
 import { IconArrowDown, IconArrowUp, IconPhoneRinging, IconVolumeOff } from '../../../base/icons/svg';
 import { isVideoMutedByUser } from '../../../base/media/functions';
 import { getLocalParticipant } from '../../../base/participants/functions';
@@ -38,7 +37,6 @@ import {
 import logger from '../../logger';
 import { hasDisplayName } from '../../utils';
 
-import DuplicateTabDialog from './dialogs/DuplicateTabDialog';
 import JoinByPhoneDialog from './dialogs/JoinByPhoneDialog';
 
 interface IProps {
@@ -243,42 +241,13 @@ const Prejoin = ({
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
-
-    /**
-     * Checks for a duplicate tab and returns a promise that resolves to true if a duplicate is found.
-     *
-     * @returns {Promise<boolean>}
-     */
-    const checkForDuplicateTab = useCallback(() => new Promise<boolean>(resolve => {
-        const channel = new BroadcastChannel('jitsi-meet-duplicate-tab');
-
-        // Set a timeout. If no response is received within this time,
-        // we assume there's no duplicate tab. 500ms is a safe value.
-        const timeout = 500;
-
-        const timeoutId = window.setTimeout(() => {
-            channel.close();
-            resolve(false); // No duplicate found
-        }, timeout);
-
-        channel.onmessage = event => {
-            if (event.data === 'is-duplicate') {
-                window.clearTimeout(timeoutId);
-                channel.close();
-                resolve(true); // Duplicate found
-            }
-        };
-
-        // Ask other tabs if they are already in a meeting.
-        channel.postMessage('check-duplicate');
-    }), []);
-
     /**
      * Handler for the join button.
      *
+     * @param {Object} e - The synthetic event.
      * @returns {void}
      */
-    const onJoinButtonClick = useCallback(async () => {
+    const onJoinButtonClick = () => {
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
@@ -288,24 +257,10 @@ const Prejoin = ({
             return;
         }
 
-        logger.info('Prejoin join button clicked. Checking for duplicate tab...');
+        logger.info('Prejoin join button clicked.');
 
-        // Wait for the check to complete
-        const isDuplicate = await checkForDuplicateTab();
-
-        if (isDuplicate) {
-            // If a duplicate is found, open the dialog and do not join the conference.
-            logger.warn('Duplicate tab detected. Opening DuplicateTabDialog.');
-            const dialogChannel = new BroadcastChannel('jitsi-meet-duplicate-tab');
-
-            dispatch(openDialog(DuplicateTabDialog, {
-                broadcastChannel: dialogChannel
-            }));
-        } else {
-            logger.info('No duplicate tab detected. Joining conference.');
-            joinConference();
-        }
-    }, [ dispatch, joinConference, showErrorOnJoin, checkForDuplicateTab ]);
+        joinConference();
+    };
 
     /**
      * Closes the dropdown.

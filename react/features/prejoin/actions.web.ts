@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { IStore } from '../app/types';
 import { LOGIN } from '../authentication/actionTypes';
+import DuplicateTabManager from '../base/app/DuplicateTabManager';
 import { updateConfig } from '../base/config/actions';
 import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions';
 import { connect } from '../base/connection/actions';
@@ -197,7 +198,7 @@ export function dialOut(onSuccess: Function, onFail: Function) {
  */
 export function joinConference(options?: Object, ignoreJoiningInProgress = false,
         jid?: string, password?: string) {
-    return function(dispatch: IStore['dispatch'], getState: IStore['getState']) {
+    return async function(dispatch: IStore['dispatch'], getState: IStore['getState']) {
         const state = getState();
         const { jwt } = state['features/base/jwt'];
 
@@ -217,6 +218,15 @@ export function joinConference(options?: Object, ignoreJoiningInProgress = false
             }
 
             dispatch(setJoiningInProgress(true));
+        }
+
+        const isDuplicate = await DuplicateTabManager.checkForDuplicate();
+
+        if (isDuplicate) {
+            logger.warn('Duplicate tab detected, aborting joinConference.');
+            dispatch(setJoiningInProgress(false));
+
+            return;
         }
 
         options && dispatch(updateConfig(options));
