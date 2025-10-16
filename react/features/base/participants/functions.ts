@@ -762,7 +762,7 @@ export function isLocalParticipantModerator(stateful: IStateful) {
 export function isLocalParticipantHost(stateful: IStateful) {
     const { conference } = toState(stateful)['features/base/conference'];
 
-    return Boolean(conference?.room.isHost());
+    return Boolean(conference?.room?.isHost());
 }
 
 /**
