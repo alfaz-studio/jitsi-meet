@@ -1,6 +1,7 @@
-import { IStore } from '../../app/types';
 import { openDialog } from '../../base/dialog/actions';
+import { setJoiningInProgress } from '../../prejoin/actions.web'; // <-- Import this action
 import DuplicateTabDialog from '../../prejoin/components/web/dialogs/DuplicateTabDialog';
+import { IStore } from '../../app/types';
 
 const CHANNEL_NAME = 'jitsi-meet-duplicate-tab-check';
 
@@ -52,34 +53,59 @@ class DuplicateTabManager {
     }
 
     /**
-     * Checks if there is another tab open with an active conference.
+     * Checks for a duplicate tab without blocking. If a duplicate is found, it shows a dialog.
+     * If not, it executes the onSuccess callback. This is used in the prejoin join flow.
      *
-     * @returns {Promise<boolean>} - A promise that resolves to true if a duplicate is found.
+     * @param {Function} onSuccess - The callback to execute if no duplicate is found.
+     * @returns {void}
      */
-    checkForDuplicate(): Promise<boolean> {
-        return new Promise(resolve => {
-            const checkChannel = new BroadcastChannel(CHANNEL_NAME);
-            const timeout = 500;
+    checkBeforeJoining(onSuccess: () => void): void {
+        const checkChannel = new BroadcastChannel(CHANNEL_NAME);
+        const timeout = 500; // This is a safe grace period, not a blocking delay.
 
-            const timeoutId = window.setTimeout(() => {
+        const timeoutId = window.setTimeout(() => {
+            checkChannel.close();
+            // No duplicate found, proceed with joining.
+            onSuccess();
+        }, timeout);
+
+        checkChannel.onmessage = event => {
+            if (event.data === 'is-duplicate') {
+                window.clearTimeout(timeoutId);
                 checkChannel.close();
-                resolve(false);
-            }, timeout);
 
-            checkChannel.onmessage = event => {
-                if (event.data === 'is-duplicate') {
-                    window.clearTimeout(timeoutId);
-                    checkChannel.close();
+                // A duplicate was found. Show the dialog and cancel the "joining" state.
+                this.store?.dispatch(openDialog(DuplicateTabDialog));
+                this.store?.dispatch(setJoiningInProgress(false));
+            }
+        };
 
-                    // A duplicate was found, open the dialog.
-                    this.store?.dispatch(openDialog(DuplicateTabDialog));
-                    resolve(true);
-                }
-            };
+        checkChannel.postMessage('check-duplicate');
+    }
 
-            // Ask other tabs if they are already in a meeting.
-            checkChannel.postMessage('check-duplicate');
-        });
+    /**
+     * A simple fire-and-forget check for when the page first loads.
+     * It only opens the dialog if a duplicate is found and does nothing otherwise.
+     *
+     * @returns {void}
+     */
+    checkOnPageLoad(): void {
+        const checkChannel = new BroadcastChannel(CHANNEL_NAME);
+        const timeout = 500;
+
+        const timeoutId = window.setTimeout(() => {
+            checkChannel.close();
+        }, timeout);
+
+        checkChannel.onmessage = event => {
+            if (event.data === 'is-duplicate') {
+                window.clearTimeout(timeoutId);
+                checkChannel.close();
+                this.store?.dispatch(openDialog(DuplicateTabDialog));
+            }
+        };
+
+        checkChannel.postMessage('check-duplicate');
     }
 }
 

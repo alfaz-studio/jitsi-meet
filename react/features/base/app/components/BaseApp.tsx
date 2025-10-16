@@ -105,8 +105,8 @@ export default class BaseApp<P> extends Component<P, IState> {
             DuplicateTabManager.init(this.state.store);
             DuplicateTabManager.start();
 
-            // Perform the check as soon as the app loads.
-            DuplicateTabManager.checkForDuplicate();
+            // Perform the non-blocking check as soon as the app loads.
+            DuplicateTabManager.checkOnPageLoad();
         }
     }
 
