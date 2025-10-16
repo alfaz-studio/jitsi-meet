@@ -1,7 +1,7 @@
+import { IStore } from '../../app/types';
 import { openDialog } from '../../base/dialog/actions';
 import { setJoiningInProgress } from '../../prejoin/actions.web'; // <-- Import this action
 import DuplicateTabDialog from '../../prejoin/components/web/dialogs/DuplicateTabDialog';
-import { IStore } from '../../app/types';
 
 const CHANNEL_NAME = 'jitsi-meet-duplicate-tab-check';
 
