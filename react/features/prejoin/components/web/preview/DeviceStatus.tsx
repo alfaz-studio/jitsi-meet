@@ -11,7 +11,7 @@ import {
     getDeviceStatusText,
     getDeviceStatusType
 } from '../../../functions';
-import PermissionsGuideDialog from '../../PermissionsGuideDialog';
+import PermissionsGuideDialog from '../dialogs/PermissionsGuideDialog';
 
 const useStyles = makeStyles<{ deviceStatusType?: string; }>()((theme, { deviceStatusType = 'pending' }) => {
     return {

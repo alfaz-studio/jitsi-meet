@@ -1029,6 +1029,8 @@
         "dialInPin": "Dial into the meeting and enter PIN code:",
         "dialing": "Dialing",
         "doNotShow": "Don't show this screen again",
+        "duplicateTabMessage": "You are already in this meeting in another tab. Please close this tab and use the existing one.",
+        "duplicateTabTitle": "Already in meeting",
         "errorDialOut": "Could not dial out",
         "errorDialOutDisconnected": "Could not dial out. Disconnected",
         "errorDialOutFailed": "Could not dial out. Call failed",
