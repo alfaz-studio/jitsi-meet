@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 
 import Dialog from '../../../../base/ui/components/web/Dialog';
 import { detectBrowserAndDevice } from '../../../utils';
-
 import TuneIcon from '../../TuneIcon';
 
 const styles = {

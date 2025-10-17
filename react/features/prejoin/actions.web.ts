@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { IStore } from '../app/types';
 import { LOGIN } from '../authentication/actionTypes';
+import DuplicateTabManager from '../base/app/DuplicateTabManager';
 import { updateConfig } from '../base/config/actions';
 import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions';
 import { connect } from '../base/connection/actions';
@@ -188,6 +189,26 @@ export function dialOut(onSuccess: Function, onFail: Function) {
 }
 
 /**
+ * Action to continue the conference joining process after the duplicate tab check has passed.
+ * This is not meant to be called directly.
+ *
+ * @param {Object} options - The config options.
+ * @param {string?} jid - The XMPP user's ID.
+ * @param {string?} password - The XMPP user's password.
+ * @returns {Function}
+ */
+function continueJoining(options?: Object, jid?: string, password?: string) {
+    return function(dispatch: IStore['dispatch']) {
+        options && dispatch(updateConfig(options));
+        logger.info('Duplicate tab check passed. Dispatching connect.');
+        dispatch(connect(jid, password))
+            .catch(() => {
+                // This is handled in base/connection/actions.
+            });
+    };
+}
+
+/**
  * Action used to start the conference.
  *
  * @param {Object} options - The config options that override the default ones (if any).
@@ -202,7 +223,6 @@ export function joinConference(options?: Object, ignoreJoiningInProgress = false
         const state = getState();
         const { jwt } = state['features/base/jwt'];
 
-        // Check if the jwt is expired. If so, get a new one.
         if (jwt && validateJwt(jwt).some(e =>
             (e as any).key === JWT_VALIDATION_ERRORS.TOKEN_EXPIRED)) {
             dispatch({ type: LOGIN });
@@ -216,17 +236,13 @@ export function joinConference(options?: Object, ignoreJoiningInProgress = false
             if (joiningInProgress) {
                 return;
             }
-
             dispatch(setJoiningInProgress(true));
         }
 
-        options && dispatch(updateConfig(options));
+        const onSuccess = () => dispatch(continueJoining(options, jid, password));
 
-        logger.info('Dispatching connect from joinConference.');
-        dispatch(connect(jid, password))
-        .catch(() => {
-            // There is nothing to do here. This is handled and dispatched in base/connection/actions.
-        });
+        // Start the non-blocking check.
+        DuplicateTabManager.checkBeforeJoining(onSuccess);
     };
 }
 

@@ -13,6 +13,7 @@ import MiddlewareRegistry from '../../redux/MiddlewareRegistry';
 import PersistenceRegistry from '../../redux/PersistenceRegistry';
 import ReducerRegistry from '../../redux/ReducerRegistry';
 import StateListenerRegistry from '../../redux/StateListenerRegistry';
+import DuplicateTabManager from '../DuplicateTabManager';
 import { appWillMount, appWillUnmount } from '../actions';
 import logger from '../logger';
 
@@ -99,6 +100,14 @@ export default class BaseApp<P> extends Component<P, IState> {
 
         // @ts-ignore
         this._init.resolve();
+
+        if (this.state.store) {
+            DuplicateTabManager.init(this.state.store);
+            DuplicateTabManager.start();
+
+            // Perform the non-blocking check as soon as the app loads.
+            DuplicateTabManager.checkOnPageLoad();
+        }
     }
 
     /**
@@ -108,6 +117,7 @@ export default class BaseApp<P> extends Component<P, IState> {
      */
     override componentWillUnmount() {
         this.state.store?.dispatch(appWillUnmount(this));
+        DuplicateTabManager.stop();
     }
 
     /**
