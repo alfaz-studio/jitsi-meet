@@ -7,11 +7,13 @@ import { sendAnalytics } from '../../../analytics/functions';
 import { IReduxState } from '../../../app/types';
 import { translate } from '../../../base/i18n/functions';
 import { IconVideo, IconVideoOff, IconVideoWarning } from '../../../base/icons/svg';
+import { MEDIA_TYPE } from '../../../base/media/constants';
 import { IGUMPendingState } from '../../../base/media/types';
-import { requestUnmuteDevice } from '../../../base/tracks/actions.web';
+import { createLocalTracksA } from '../../../base/tracks/actions.any';
+import { getLocalTrack } from '../../../base/tracks/functions.any';
 import Spinner from '../../../base/ui/components/web/Spinner';
 import { registerShortcut, unregisterShortcut } from '../../../keyboard-shortcuts/actions';
-import PermissionsGuideDialog from '../../../prejoin/components/PermissionsGuideDialog';
+import PermissionsGuideDialog from '../../../prejoin/components/web/dialogs/PermissionsGuideDialog';
 import { SPINNER_COLOR } from '../../constants';
 import AbstractVideoMuteButton, {
     IProps as AbstractVideoMuteButtonProps,
@@ -37,6 +39,11 @@ export interface IProps extends AbstractVideoMuteButtonProps {
      * The gumPending state from redux.
      */
     _gumPending: IGUMPendingState;
+
+    /**
+     * Whether a local video track exists.
+     */
+    _hasTrack: boolean;
 
     /**
      * An object containing the CSS classes.
@@ -211,19 +218,15 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {void}
      */
     override _handleClick() {
-        const { _videoMuted } = this.props;
+        const { _hasTrack, dispatch } = this.props;
 
-        if (_videoMuted || this.state.permissionState === 'denied') {
+        if (!_hasTrack) {
             if (this.state.permissionState === 'denied') {
-                // If permission is already denied, the browser won't show a prompt.
-                // So, we show our guide instead.
                 this.setState({ showGuide: true });
             } else {
-                // If permission is 'prompt', we request the device.
-                this.props.dispatch(requestUnmuteDevice('video'));
+                dispatch(createLocalTracksA({ devices: [ 'video' ] }));
             }
         } else {
-            // The button is unmuted, so the user wants to mute it.
             super._handleClick();
         }
     }
@@ -323,10 +326,12 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
  */
 function _mapStateToProps(state: IReduxState) {
     const { gumPending } = state['features/base/media'].video;
+    const _hasTrack = Boolean(getLocalTrack(state['features/base/tracks'], MEDIA_TYPE.AUDIO));
 
     return {
         ...abstractMapStateToProps(state),
-        _gumPending: gumPending
+        _gumPending: gumPending,
+        _hasTrack
     };
 }
 
