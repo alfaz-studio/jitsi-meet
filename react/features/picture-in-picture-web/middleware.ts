@@ -1,5 +1,6 @@
 import { IStore } from '../app/types';
 import { CONFERENCE_JOINED, CONFERENCE_LEFT } from '../base/conference/actionTypes';
+import { isMobileBrowser } from '../base/environment/utils';
 import { SET_AUDIO_MUTED, SET_VIDEO_MUTED } from '../base/media/actionTypes';
 import { MEDIA_TYPE } from '../base/media/constants';
 import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
@@ -51,7 +52,8 @@ MiddlewareRegistry.register((store: IStore) => {
         const { conference } = state['features/base/conference'];
         const { inPip } = state['features/picture-in-picture-web'] || {};
 
-        const autoPipEnabled = true;
+        // The feature will only be enabled if isMobileBrowser() returns false.
+        const autoPipEnabled = !isMobileBrowser();
 
         // Only toggle PiP if the feature is enabled and we are in a conference.
         if (!conference || !autoPipEnabled) {

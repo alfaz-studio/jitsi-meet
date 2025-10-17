@@ -8,6 +8,8 @@ import { getParticipantById } from '../base/participants/functions';
 import { getVideoTrackByParticipant, isLocalTrackMuted } from '../base/tracks/functions.any';
 import { getLargeVideoParticipant } from '../large-video/functions';
 
+import { webPipExited } from './actions';
+
 type GetState = () => IReduxState;
 
 class WebPipController {
@@ -55,6 +57,13 @@ class WebPipController {
         this.hiddenVideo!.muted = true;
         await this.hiddenVideo!.play();
 
+        this.hiddenVideo!.addEventListener('leavepictureinpicture', this.onLeavePiP);
+
+        if (this.hiddenVideo?.requestPictureInPicture) {
+            await this.hiddenVideo!.requestPictureInPicture();
+            this.setupMediaSession(getState);
+        }
+
         const anyVid: any = this.hiddenVideo as any;
 
         if (this.hiddenVideo?.requestPictureInPicture) {
@@ -69,32 +78,41 @@ class WebPipController {
     }
 
     public async exit() {
+        // The onLeavePiP event handler will take care of all the cleanup.
+        if (this.running && document.pictureInPictureElement) {
+            try {
+                await document.exitPictureInPicture();
+            } catch (error) {
+                console.error('[Controller] Error while trying to exit Picture-in-Picture:', error);
+                // If it fails, force a cleanup just in case.
+                this.onLeavePiP();
+            }
+        } else {
+            console.warn('[Controller] exit() called, but no PiP window was open.');
+        }
+    }
+
+    private onLeavePiP = () => {
         if (!this.running) {
+            // Avoid running cleanup multiple times
             return;
         }
-        this.running = false;
-        this.dispatch = undefined;
 
-        // Clear Media Session handlers and metadata
+        this.running = false;
+
+        // Clean up the event listener itself
+        this.hiddenVideo?.removeEventListener('leavepictureinpicture', this.onLeavePiP);
+
+        // Clear Media Session handlers
         this.clearMediaSession();
 
-        if (this.animationHandle) {
-            cancelAnimationFrame(this.animationHandle);
-            this.animationHandle = undefined;
-        }
+        // Stop the drawing loop
         if (this.intervalHandle) {
             clearInterval(this.intervalHandle);
             this.intervalHandle = undefined;
         }
-        document.removeEventListener('leavepictureinpicture', this.onLeavePiP);
-        try {
-            if (document.pictureInPictureElement) {
-                await document.exitPictureInPicture();
-            }
-        } catch {
-            // ignore
-        }
-        // Stop tracks
+
+        // Stop video tracks
         const ms = this.hiddenVideo?.srcObject as MediaStream | undefined;
 
         ms?.getTracks().forEach(t => t.stop());
@@ -102,14 +120,12 @@ class WebPipController {
             this.hiddenVideo.srcObject = null;
         }
 
-        // Detach audio level listener if attached
         if (this.audioTrackListenerBound) {
             this.detachAudioLevelListener();
         }
-    }
 
-    private onLeavePiP = () => {
-        // cleanup handled by actions; keep minimal here
+        this.dispatch?.(webPipExited());
+        this.dispatch = undefined;
     };
 
     private ensureElements() {
