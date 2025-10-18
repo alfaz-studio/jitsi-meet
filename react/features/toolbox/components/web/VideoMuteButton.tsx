@@ -6,10 +6,14 @@ import { ACTION_SHORTCUT_TRIGGERED, VIDEO_MUTE, createShortcutEvent } from '../.
 import { sendAnalytics } from '../../../analytics/functions';
 import { IReduxState } from '../../../app/types';
 import { translate } from '../../../base/i18n/functions';
+import { IconVideo, IconVideoOff, IconVideoWarning } from '../../../base/icons/svg';
+import { MEDIA_TYPE } from '../../../base/media/constants';
 import { IGUMPendingState } from '../../../base/media/types';
-import AbstractButton from '../../../base/toolbox/components/AbstractButton';
+import { createLocalTracksA } from '../../../base/tracks/actions.any';
+import { getLocalTrack } from '../../../base/tracks/functions.any';
 import Spinner from '../../../base/ui/components/web/Spinner';
 import { registerShortcut, unregisterShortcut } from '../../../keyboard-shortcuts/actions';
+import PermissionsGuideDialog from '../../../prejoin/components/web/dialogs/PermissionsGuideDialog';
 import { SPINNER_COLOR } from '../../constants';
 import AbstractVideoMuteButton, {
     IProps as AbstractVideoMuteButtonProps,
@@ -37,9 +41,29 @@ export interface IProps extends AbstractVideoMuteButtonProps {
     _gumPending: IGUMPendingState;
 
     /**
+     * Whether a local video track exists.
+     */
+    _hasTrack: boolean;
+
+    /**
      * An object containing the CSS classes.
      */
     classes?: Partial<Record<keyof ReturnType<typeof styles>, string>>;
+}
+
+/**
+ * The type of the React {@code Component} state of {@link VideoMuteButton}.
+ */
+interface IState {
+    /**
+     * The current browser permission state for the camera.
+     */
+    permissionState: 'granted' | 'denied' | 'prompt';
+
+    /**
+     * Whether or not the permissions guide dialog should be displayed.
+     */
+    showGuide: boolean;
 }
 
 /**
@@ -48,6 +72,20 @@ export interface IProps extends AbstractVideoMuteButtonProps {
  * @augments AbstractVideoMuteButton
  */
 class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
+    /**
+     * The internal state of the component.
+     *
+     * @inheritdoc
+     */
+    public override readonly state: IState = {
+        permissionState: 'prompt',
+        showGuide: false,
+    };
+
+    /**
+     * A reference to the permission status object.
+     */
+    private _permissionStatus: PermissionStatus | null = null;
 
     /**
      * Initializes a new {@code VideoMuteButton} instance.
@@ -61,6 +99,8 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
         // Bind event handlers so they are only bound once per instance.
         this._onKeyboardShortcut = this._onKeyboardShortcut.bind(this);
         this._getTooltip = this._getLabel;
+        this._handlePermissionChange = this._handlePermissionChange.bind(this);
+        this._onCloseGuide = this._onCloseGuide.bind(this);
     }
 
     /**
@@ -69,12 +109,22 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @inheritdoc
      * @returns {void}
      */
-    override componentDidMount() {
+    override async componentDidMount() {
         this.props.dispatch(registerShortcut({
             character: 'V',
             helpDescription: 'keyboardShortcuts.videoMute',
             handler: this._onKeyboardShortcut
         }));
+
+        if (navigator.permissions?.query) {
+            try {
+                this._permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
+                this.setState({ permissionState: this._permissionStatus.state });
+                this._permissionStatus.onchange = this._handlePermissionChange;
+            } catch (error) {
+                console.warn('Could not query camera permission status.', error);
+            }
+        }
     }
 
     /**
@@ -85,6 +135,34 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      */
     override componentWillUnmount() {
         this.props.dispatch(unregisterShortcut('V'));
+
+        if (this._permissionStatus) {
+            this._permissionStatus.onchange = null;
+        }
+    }
+
+    /**
+     * Overrides the parent's render method to dynamically set the icon and render the dialog.
+     *
+     * @override
+     * @returns {React.ReactNode}
+     */
+    override render(): React.ReactNode {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+            this.icon = IconVideoWarning;
+            this.toggledIcon = IconVideoWarning;
+        } else {
+            this.icon = IconVideo;
+            this.toggledIcon = IconVideoOff;
+        }
+
+        // The button is rendered by the parent, and the dialog is rendered here as a sibling.
+        return (
+            <>
+                {super.render()}
+                {this.state.showGuide && <PermissionsGuideDialog onClose = { this._onCloseGuide } />}
+            </>
+        );
     }
 
     /**
@@ -98,6 +176,10 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {string}
      */
     override _getAccessibilityLabel() {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+            return 'toolbar.cameraPermissionDenied';
+        }
+
         const { _gumPending } = this.props;
 
         if (_gumPending === IGUMPendingState.NONE) {
@@ -115,13 +197,48 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {string}
      */
     override _getLabel() {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+            return 'toolbar.cameraPermissionDenied';
+        }
+
         const { _gumPending } = this.props;
 
         if (_gumPending === IGUMPendingState.NONE) {
             return super._getLabel();
         }
 
-        return 'toolbar.videomuteGUMPending';
+        return super._getLabel();
+    }
+
+    /**
+     * Handles clicking the button.
+     *
+     * @override
+     * @protected
+     * @returns {void}
+     */
+    override _handleClick() {
+        const { _hasTrack, dispatch } = this.props;
+
+        if (!_hasTrack) {
+            if (this.state.permissionState === 'denied') {
+                this.setState({ showGuide: true });
+            } else {
+                dispatch(createLocalTracksA({ devices: [ 'video' ] }));
+            }
+        } else {
+            super._handleClick();
+        }
+    }
+
+    /**
+     * A handler for closing the permissions guide dialog.
+     *
+     * @private
+     * @returns {void}
+     */
+    _onCloseGuide() {
+        this.setState({ showGuide: false });
     }
 
     /**
@@ -132,6 +249,10 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
      * @returns {boolean}
      */
     override _isVideoMuted() {
+        if (this.state.permissionState === 'denied') {
+            return true;
+        }
+
         if (this.props._gumPending === IGUMPendingState.PENDING_UNMUTE) {
             return false;
         }
@@ -177,7 +298,19 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
                 ACTION_SHORTCUT_TRIGGERED,
                 { enable: !this._isVideoMuted() }));
 
-        AbstractButton.prototype._onClick.call(this);
+        this._handleClick();
+    }
+
+    /**
+     * Updates the component state when the camera permission changes.
+     *
+     * @private
+     * @returns {void}
+     */
+    _handlePermissionChange() {
+        if (this._permissionStatus) {
+            this.setState({ permissionState: this._permissionStatus.state });
+        }
     }
 }
 
@@ -193,10 +326,12 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
  */
 function _mapStateToProps(state: IReduxState) {
     const { gumPending } = state['features/base/media'].video;
+    const _hasTrack = Boolean(getLocalTrack(state['features/base/tracks'], MEDIA_TYPE.AUDIO));
 
     return {
         ...abstractMapStateToProps(state),
-        _gumPending: gumPending
+        _gumPending: gumPending,
+        _hasTrack
     };
 }
 

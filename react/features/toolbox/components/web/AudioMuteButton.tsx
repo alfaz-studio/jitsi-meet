@@ -6,10 +6,14 @@ import { ACTION_SHORTCUT_TRIGGERED, AUDIO_MUTE, createShortcutEvent } from '../.
 import { sendAnalytics } from '../../../analytics/functions';
 import { IReduxState } from '../../../app/types';
 import { translate } from '../../../base/i18n/functions';
+import { IconMic, IconMicSlash, IconMicWarning } from '../../../base/icons/svg';
+import { MEDIA_TYPE } from '../../../base/media/constants';
 import { IGUMPendingState } from '../../../base/media/types';
-import AbstractButton from '../../../base/toolbox/components/AbstractButton';
+import { createLocalTracksA } from '../../../base/tracks/actions.any';
+import { getLocalTrack } from '../../../base/tracks/functions.any';
 import Spinner from '../../../base/ui/components/web/Spinner';
 import { registerShortcut, unregisterShortcut } from '../../../keyboard-shortcuts/actions';
+import PermissionsGuideDialog from '../../../prejoin/components/web/dialogs/PermissionsGuideDialog';
 import { SPINNER_COLOR } from '../../constants';
 import AbstractAudioMuteButton, {
     IProps as AbstractAudioMuteButtonProps,
@@ -37,10 +41,29 @@ interface IProps extends AbstractAudioMuteButtonProps {
     _gumPending: IGUMPendingState;
 
     /**
+     * Whether a local video track exists.
+     */
+    _hasTrack: boolean;
+
+    /**
    * An object containing the CSS classes.
    */
     classes?: Partial<Record<keyof ReturnType<typeof styles>, string>>;
+}
 
+/**
+ * The type of the React {@code Component} state of {@link AudioMuteButton}.
+ */
+interface IState {
+    /**
+     * The current browser permission state for the microphone.
+     */
+    permissionState: 'granted' | 'denied' | 'prompt';
+
+    /**
+     * Whether or not the permissions guide dialog should be displayed.
+     */
+    showGuide: boolean;
 }
 
 /**
@@ -56,12 +79,30 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @param {IProps} props - The read-only React {@code Component} props with
      * which the new instance is to be initialized.
      */
+
+    /**
+     * The internal state of the component.
+     *
+     * @inheritdoc
+     */
+    public override readonly state: IState = {
+        permissionState: 'prompt',
+        showGuide: false,
+    };
+
+    /**
+     * A reference to the permission status object.
+     */
+    private _permissionStatus: PermissionStatus | null = null;
+
     constructor(props: IProps) {
         super(props);
 
         // Bind event handlers so they are only bound once per instance.
         this._onKeyboardShortcut = this._onKeyboardShortcut.bind(this);
         this._getTooltip = this._getLabel;
+        this._handlePermissionChange = this._handlePermissionChange.bind(this);
+        this._onCloseGuide = this._onCloseGuide.bind(this);
     }
 
     /**
@@ -70,12 +111,24 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @inheritdoc
      * @returns {void}
      */
-    override componentDidMount() {
-        this.props.dispatch(registerShortcut({
-            character: 'M',
-            helpDescription: 'keyboardShortcuts.mute',
-            handler: this._onKeyboardShortcut
-        }));
+    override async componentDidMount() {
+        this.props.dispatch(
+            registerShortcut({
+                character: 'M',
+                helpDescription: 'keyboardShortcuts.mute',
+                handler: this._onKeyboardShortcut,
+            })
+        );
+
+        if (navigator.permissions?.query) {
+            try {
+                this._permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+                this.setState({ permissionState: this._permissionStatus.state });
+                this._permissionStatus.onchange = this._handlePermissionChange;
+            } catch (error) {
+                console.warn('Could not query microphone permission status.', error);
+            }
+        }
     }
 
     /**
@@ -86,6 +139,33 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      */
     override componentWillUnmount() {
         this.props.dispatch(unregisterShortcut('M'));
+        if (this._permissionStatus) {
+            this._permissionStatus.onchange = null;
+        }
+    }
+
+    /**
+     * Overrides the parent's render method to dynamically set the icon and render the dialog.
+     *
+     * @override
+     * @returns {React.ReactNode}
+     */
+    override render(): React.ReactNode {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+            this.icon = IconMicWarning;
+            this.toggledIcon = IconMicWarning;
+        } else {
+            this.icon = IconMic;
+            this.toggledIcon = IconMicSlash;
+        }
+
+        // The button is rendered by the parent, and the dialog is rendered here as a sibling.
+        return (
+            <>
+                {super.render()}
+                {this.state.showGuide && <PermissionsGuideDialog onClose = { this._onCloseGuide } />}
+            </>
+        );
     }
 
     /**
@@ -99,6 +179,9 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {string}
      */
     override _getAccessibilityLabel() {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+            return 'toolbar.micPermissionDenied';
+        }
         const { _gumPending } = this.props;
 
         if (_gumPending === IGUMPendingState.NONE) {
@@ -116,6 +199,9 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {string}
      */
     override _getLabel() {
+        if (this.state.permissionState === 'denied' || this.state.permissionState === 'prompt') {
+            return 'toolbar.micPermissionDenied';
+        }
         const { _gumPending } = this.props;
 
         if (_gumPending === IGUMPendingState.NONE) {
@@ -133,11 +219,46 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
      * @returns {boolean}
      */
     override _isAudioMuted() {
+        if (this.state.permissionState === 'denied') {
+            return true;
+        }
         if (this.props._gumPending === IGUMPendingState.PENDING_UNMUTE) {
             return false;
         }
 
         return super._isAudioMuted();
+    }
+
+
+    /**
+     * Handles clicking the button.
+     *
+     * @override
+     * @protected
+     * @returns {void}
+     */
+    override _handleClick() {
+        const { _hasTrack, dispatch } = this.props;
+
+        if (!_hasTrack) {
+            if (this.state.permissionState === 'denied') {
+                this.setState({ showGuide: true });
+            } else {
+                dispatch(createLocalTracksA({ devices: [ 'audio' ] }));
+            }
+        } else {
+            super._handleClick();
+        }
+    }
+
+    /**
+     * A handler for closing the permissions guide dialog.
+     *
+     * @private
+     * @returns {void}
+     */
+    _onCloseGuide() {
+        this.setState({ showGuide: false });
     }
 
     /**
@@ -152,14 +273,14 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
         if (this._isDisabled()) {
             return;
         }
+        sendAnalytics(createShortcutEvent(AUDIO_MUTE, ACTION_SHORTCUT_TRIGGERED, { enable: !this._isAudioMuted() }));
+        this._handleClick();
+    }
 
-        sendAnalytics(
-            createShortcutEvent(
-                AUDIO_MUTE,
-                ACTION_SHORTCUT_TRIGGERED,
-                { enable: !this._isAudioMuted() }));
-
-        AbstractButton.prototype._onClick.call(this);
+    _handlePermissionChange() {
+        if (this._permissionStatus) {
+            this.setState({ permissionState: this._permissionStatus.state });
+        }
     }
 
     /**
@@ -195,10 +316,12 @@ class AudioMuteButton extends AbstractAudioMuteButton<IProps> {
  */
 function _mapStateToProps(state: IReduxState) {
     const { gumPending } = state['features/base/media'].audio;
+    const _hasTrack = Boolean(getLocalTrack(state['features/base/tracks'], MEDIA_TYPE.AUDIO));
 
     return {
         ...abstractMapStateToProps(state),
-        _gumPending: gumPending
+        _gumPending: gumPending,
+        _hasTrack
     };
 }
 

@@ -1,3 +1,5 @@
+import { IReduxState } from '../app/types';
+import { hasDevicePermission } from '../base/devices/functions.any';
 import PersistenceRegistry from '../base/redux/PersistenceRegistry';
 import ReducerRegistry from '../base/redux/ReducerRegistry';
 
@@ -82,7 +84,7 @@ ReducerRegistry.register<IPrejoinState>(
             };
 
         case SET_PREJOIN_DEVICE_ERRORS: {
-            const status = getStatusFromErrors(action.value);
+            const status = getStatusFromErrors(action.value, action.state);
 
             return {
                 ...state,
@@ -135,39 +137,44 @@ ReducerRegistry.register<IPrejoinState>(
 );
 
 /**
- * Returns a suitable error object based on the track errors.
+ * Returns a suitable error object based on the track errors and device permissions.
  *
  * @param {Object} errors - The errors got while creating local tracks.
+ * @param {IReduxState} [state] - The redux state, used to check device permissions.
  * @returns {Object}
  */
-function getStatusFromErrors(errors: {
+export function getStatusFromErrors(errors: {
     audioAndVideoError?: { message: string; };
     audioOnlyError?: { message: string; };
-    videoOnlyError?: { message: string; }; }
+    videoOnlyError?: { message: string; }; },
+state: IReduxState
 ) {
     const { audioOnlyError, videoOnlyError, audioAndVideoError } = errors;
 
-    if (audioAndVideoError) {
+    const hasAudioPermission = hasDevicePermission(state, 'audio');
+    const hasVideoPermission = hasDevicePermission(state, 'video');
+
+    if (audioAndVideoError || (!hasAudioPermission && !hasVideoPermission)) {
         return {
             deviceStatusType: 'warning',
             deviceStatusText: 'prejoin.audioAndVideoError',
-            rawError: audioAndVideoError.message
+            rawError: audioAndVideoError?.message ?? ''
         };
     }
 
-    if (audioOnlyError) {
+    if (audioOnlyError || !hasAudioPermission) {
         return {
             deviceStatusType: 'warning',
             deviceStatusText: 'prejoin.audioOnlyError',
-            rawError: audioOnlyError.message
+            rawError: audioOnlyError?.message ?? ''
         };
     }
 
-    if (videoOnlyError) {
+    if (videoOnlyError || !hasVideoPermission) {
         return {
             deviceStatusType: 'warning',
             deviceStatusText: 'prejoin.videoOnlyError',
-            rawError: videoOnlyError.message
+            rawError: videoOnlyError?.message ?? ''
         };
     }
 

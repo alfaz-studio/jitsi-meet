@@ -1,9 +1,12 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
+import { IReduxState } from '../../../../app/types';
+import { hasDevicePermission } from '../../../../base/devices/functions.any';
 import { ColorPalette } from '../../../../base/styles/components/styles/ColorPalette';
+import { setDeviceStatusFromSrc } from '../../../actions.web';
 import {
     getDeviceStatusText,
     getDeviceStatusType
@@ -64,12 +67,21 @@ const useStyles = makeStyles<{ deviceStatusType?: string; }>()((theme, { deviceS
  */
 function DeviceStatus() {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
     const deviceStatusType = useSelector(getDeviceStatusType) as string | undefined;
     const deviceStatusText = useSelector(getDeviceStatusText);
+    const hasAudioPermission = useSelector((state: IReduxState) => hasDevicePermission(state, 'audio'));
+    const hasVideoPermission = useSelector((state: IReduxState) => hasDevicePermission(state, 'video'));
     const { classes, cx } = useStyles({ deviceStatusType });
     const hasError = deviceStatusType === 'warning';
     const [ showGuide, setShowGuide ] = useState(false);
     const containerClassName = cx(classes.deviceStatus, { 'device-status-error': hasError });
+
+
+    useEffect(() => {
+        // Every time the permissions change, just re-calculate and set the status.
+        dispatch(setDeviceStatusFromSrc());
+    }, [ hasAudioPermission, hasVideoPermission, dispatch ]);
 
     const handleOpenGuide = useCallback(() => {
         setShowGuide(true);

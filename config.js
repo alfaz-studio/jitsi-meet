@@ -209,12 +209,13 @@ var config = {
     startAudioOnly: false,
 
     // Every participant after the Nth will start audio muted.
-    // startAudioMuted: 2,
-    ignoreStartMuted: true,
+    startAudioMuted: 2,
+
+    // ignoreStartMuted: true,
 
     // Start calls with audio muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
-    startWithAudioMuted: false,
+    startWithAudioMuted: true,
 
     // Enabling it (with #params) will disable local audio output of remote
     // participants and to enable it back a reload is needed.
@@ -369,7 +370,7 @@ var config = {
 
     // Start calls with video muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
-    startWithVideoMuted: false,
+    startWithVideoMuted: true,
 
     // Desktop sharing
 
@@ -758,7 +759,7 @@ var config = {
 
     // Disable initial browser getUserMedia requests.
     // This is useful for scenarios where users might want to start a conference for screensharing only
-    disableInitialGUM: false,
+    disableInitialGUM: true,
 
     // Enabling the close page will ignore the welcome page redirection when
     // a call is hangup.
@@ -810,21 +811,22 @@ var config = {
     // googleApiApplicationClientID: '<client_id>',
 
     // Configs for prejoin page.
-    // prejoinConfig: {
-    //     // When 'true', it shows an intermediate page before joining, where the user can configure their devices.
-    //     enabled: true,
-    //     // Hides the participant name editing field in the prejoin screen.
-    //     // If requireDisplayName is also set as true, a name should still be provided through
-    //     // either the jwt or the userInfo from the iframe api init object in order for this to have an effect.
-    //     hideDisplayName: false,
-    //     // List of buttons to hide from the extra join options dropdown.
-    //     hideExtraJoinButtons: ['no-audio', 'by-phone'],
-    //     // Configuration for pre-call test
-    //     // By setting preCallTestEnabled, you enable the pre-call test in the prejoin page.
-    //     // ICE server credentials need to be provided over the preCallTestICEUrl
-    //     preCallTestEnabled: false,
-    //     preCallTestICEUrl: ''
-    // },
+    prejoinConfig: {
+        // When 'true', it shows an intermediate page before joining, where the user can configure their devices.
+        // enabled: true,
+        // Hides the participant name editing field in the prejoin screen.
+        // If requireDisplayName is also set as true, a name should still be provided through
+        // either the jwt or the userInfo from the iframe api init object in order for this to have an effect.
+        // hideDisplayName: false,
+        // List of buttons to hide from the extra join options dropdown.
+        hideExtraJoinButtons: [ 'no-audio' ],
+
+        // Configuration for pre-call test
+        // By setting preCallTestEnabled, you enable the pre-call test in the prejoin page.
+        // ICE server credentials need to be provided over the preCallTestICEUrl
+        // preCallTestEnabled: false,
+        // preCallTestICEUrl: ''
+    },
 
     // When 'true', the user cannot edit the display name.
     // (Mainly useful when used in conjunction with the JWT so the JWT name becomes read only.)
@@ -1743,9 +1745,9 @@ var config = {
      websocketKeepAlive
      websocketKeepAliveUrl
      */
-    flags: {
-        ssrcRewritingEnabled: false
-    },
+    // flags: {
+    //     ssrcRewritingEnabled: false
+    // },
 
     /**
      * Default interval (milliseconds) for triggering mouseMoved iframe API event
