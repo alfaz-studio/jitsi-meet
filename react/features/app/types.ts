@@ -59,6 +59,7 @@ import { INoiseDetectionState } from '../noise-detection/reducer';
 import { INoiseSuppressionState } from '../noise-suppression/reducer';
 import { INotificationsState } from '../notifications/reducer';
 import { IParticipantsPaneState } from '../participants-pane/reducer';
+import { IWebPipState } from '../picture-in-picture-web/reducer';
 import { IPollsState } from '../polls/reducer';
 import { IPollsHistoryState } from '../polls-history/reducer';
 import { IPowerMonitorState } from '../power-monitor/reducer';
@@ -149,6 +150,7 @@ export interface IReduxState {
     'features/noise-suppression': INoiseSuppressionState;
     'features/notifications': INotificationsState;
     'features/participants-pane': IParticipantsPaneState;
+    'features/picture-in-picture-web': IWebPipState;
     'features/polls': IPollsState;
     'features/polls-history': IPollsHistoryState;
     'features/power-monitor': IPowerMonitorState;

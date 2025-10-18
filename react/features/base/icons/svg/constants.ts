@@ -66,6 +66,7 @@ import { default as IconOffice365 } from './office365.svg';
 import { default as IconRecordOpportunity } from './opportunity-record.svg';
 import { default as IconPerformance } from './performance.svg';
 import { default as IconPhoneRinging } from './phone-ringing.svg';
+import { default as IconPictureInPicture } from './picture-in-picture.svg';
 import { default as IconPin } from './pin.svg';
 import { default as IconPinned } from './pinned.svg';
 import { default as IconPlay } from './play.svg';
@@ -177,6 +178,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconOffice365,
     IconPerformance,
     IconPhoneRinging,
+    IconPictureInPicture,
     IconPin,
     IconPinned,
     IconPlay,
