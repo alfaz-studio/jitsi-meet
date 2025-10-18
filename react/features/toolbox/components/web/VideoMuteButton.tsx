@@ -9,8 +9,8 @@ import { translate } from '../../../base/i18n/functions';
 import { IconVideo, IconVideoOff, IconVideoWarning } from '../../../base/icons/svg';
 import { MEDIA_TYPE } from '../../../base/media/constants';
 import { IGUMPendingState } from '../../../base/media/types';
-import { createLocalTracksA } from '../../../base/tracks/actions.any';
-import { getLocalTrack } from '../../../base/tracks/functions.any';
+import { createInitialAVTracks } from '../../../base/tracks/actions';
+import { getLocalTrack } from '../../../base/tracks/functions';
 import Spinner from '../../../base/ui/components/web/Spinner';
 import { registerShortcut, unregisterShortcut } from '../../../keyboard-shortcuts/actions';
 import PermissionsGuideDialog from '../../../prejoin/components/web/dialogs/PermissionsGuideDialog';
@@ -224,11 +224,11 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
             if (this.state.permissionState === 'denied') {
                 this.setState({ showGuide: true });
             } else {
-                dispatch(createLocalTracksA({ devices: [ 'video' ] }));
+                dispatch(createInitialAVTracks({ devices: [ 'video' ] }));
             }
-        } else {
-            super._handleClick();
         }
+
+        super._handleClick();
     }
 
     /**
