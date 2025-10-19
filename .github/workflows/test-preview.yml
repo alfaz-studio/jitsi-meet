@@ -4,7 +4,6 @@ on:
   workflow_run:
     workflows: ["Deploy"]
     types: [completed]
-    branches: [sonacove]
 
 jobs:
   test-preview:
