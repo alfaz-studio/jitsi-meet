@@ -1,5 +1,6 @@
 import { default as IconRecordAccount } from './account-record.svg';
 import { default as IconAddUser } from './add-user.svg';
+import { default as IconAnnotate } from './annotate.svg';
 import { default as IconArrowBack } from './arrow-back.svg';
 import { default as IconArrowDownLarge } from './arrow-down-large.svg';
 import { default as IconArrowDown } from './arrow-down.svg';
@@ -116,6 +117,7 @@ import { default as IconYahoo } from './yahoo.svg';
  */
 export const DEFAULT_ICON: Record<string, any> = {
     IconAddUser,
+    IconAnnotate,
     IconArrowBack,
     IconArrowDown,
     IconArrowDownLarge,
