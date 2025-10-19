@@ -52,10 +52,6 @@ const PermissionsGuideDialog = ({ onClose }: Props) => {
         });
     }, []);
 
-    const handleSubmit = useCallback(() => {
-        window.location.reload();
-    }, []);
-
     const renderInstructions = () => {
         const key = `prejoin.permissionsGuide.steps.${browser}_${device}`;
         const fallbackKey = 'prejoin.permissionsGuide.steps.default';
@@ -136,8 +132,7 @@ const PermissionsGuideDialog = ({ onClose }: Props) => {
         <Dialog
             cancel = {{ translationKey: 'prejoin.permissionsGuide.close' }}
             onCancel = { onClose }
-            onSubmit = { handleSubmit }
-            submit = { handleSubmit }
+            onSubmit = { onClose }
             titleKey = 'prejoin.permissionsGuide.title'>
             <div className = 'prejoin-permissions-dialog'>
                 <p>
