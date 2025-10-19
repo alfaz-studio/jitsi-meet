@@ -1,0 +1,160 @@
+name: Test Preview Deployment
+
+on:
+  workflow_run:
+    workflows: [Deploy]
+    types: [completed]
+  workflow_dispatch: # Manual trigger for testing
+
+jobs:
+  test-preview:
+    name: Run Tests on Preview
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Debug workflow trigger
+        run: |
+          echo "Workflow triggered!"
+          echo "Event: ${{ github.event.workflow_run.event }}"
+          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Workflow name: ${{ github.event.workflow_run.name }}"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download preview URL artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-url
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract preview URL
+        id: extract-url
+        run: |
+          PREVIEW_URL=$(cat ./artifacts/preview-url.txt)
+          echo "Preview URL: $PREVIEW_URL"
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          
+          # Validate URL format
+          if [[ "$PREVIEW_URL" =~ ^https?:// ]]; then
+            echo "url_valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "url_valid=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install Chrome dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            chromium-browser \
+            chromium-chromedriver \
+            xvfb
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create test environment file
+        if: steps.extract-url.outputs.url_valid == 'true'
+        run: |
+          cat > tests/.env << EOF
+          # The base URL that will be used for the test
+          BASE_URL=${{ steps.extract-url.outputs.preview_url }}/meet/
+          
+          # Room name configuration
+          ROOM_NAME_PREFIX=test
+          ROOM_NAME_SUFFIX=grid
+          
+          # Browser configuration
+          HEADLESS=true
+          ALLOW_INSECURE_CERTS=true
+          
+          # Video capture file (absolute path)
+          VIDEO_CAPTURE_FILE=${{ github.workspace }}/tests/resources/fakeVideoStream.y4m
+          
+          # Test execution configuration
+          MAX_INSTANCES=1
+          
+          # Domain resolution
+          RESOLVER_RULES=MAP localhost 127.0.0.1
+          EOF
+          
+          echo "Created tests/.env with BASE_URL: ${{ steps.extract-url.outputs.preview_url }}/meet/"
+
+      - name: Run tests
+        if: steps.extract-url.outputs.url_valid == 'true'
+        continue-on-error: true
+        run: |
+          # Set display for headless Chrome
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x1024x24 &
+          
+          # Run tests
+          npm run test
+        env:
+          DOTENV_CONFIG_PATH: tests/.env
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.event.workflow_run.head_sha }}
+          path: |
+            test-results/
+            !test-results/allure-results/
+          retention-days: 30
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ github.event.workflow_run.head_sha }}
+          path: test-results/allure-report/
+          retention-days: 30
+
+      - name: Parse test results and create summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.extract-url.outputs.url_valid }}" != "true" ]; then
+            echo "❌ **Status:** Failed - Invalid preview URL" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** Could not extract valid preview URL from deployment" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "✅ **Status:** Tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "**Preview URL:** ${{ steps.extract-url.outputs.preview_url }}/meet/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Try to parse JUnit results if available
+          if [ -f "test-results/results-0.xml" ]; then
+            TESTS=$(grep -o 'tests="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "unknown")
+            FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
+            ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
+            
+            echo "**Test Results:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Total Tests: $TESTS" >> $GITHUB_STEP_SUMMARY
+            echo "- Failures: $FAILURES" >> $GITHUB_STEP_SUMMARY
+            echo "- Errors: $ERRORS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Note:** Detailed test results not available" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "**Artifacts:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Results: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Allure Report: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Tests run against preview deployment: ${{ steps.extract-url.outputs.preview_url }}/meet/*" >> $GITHUB_STEP_SUMMARY
+

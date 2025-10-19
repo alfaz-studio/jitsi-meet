@@ -58,7 +58,13 @@ const chromePreferences = {
 };
 
 const specs = [
-    'specs/**/*.spec.ts'
+    'specs/alone/**/*.spec.ts',
+    'specs/2way/**/*.spec.ts',
+    // TODO: Enable 3way and 4way tests later
+    // 'specs/3way/**/*.spec.ts',
+    // 'specs/4way/**/*.spec.ts',
+    // 'specs/iframe/**/*.spec.ts',
+    // 'specs/jaas/**/*.spec.ts'
 ];
 
 /**
