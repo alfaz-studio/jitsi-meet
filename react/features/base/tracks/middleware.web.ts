@@ -4,6 +4,7 @@ import { IStore } from '../../app/types';
 import { hideNotification } from '../../notifications/actions';
 import { isPrejoinPageVisible } from '../../prejoin/functions';
 import { setAudioSettings } from '../../settings/actions.web';
+import { handleToggleVideoMuted } from '../../toolbox/actions.any';
 import { getAvailableDevices } from '../devices/actions.web';
 import { SET_AUDIO_MUTED } from '../media/actionTypes';
 import { gumPending, setScreenshareMuted } from '../media/actions';
@@ -107,6 +108,9 @@ MiddlewareRegistry.register(store => next => action => {
 
     case TRACK_STOPPED: {
         const { jitsiTrack } = action.track;
+        const { dispatch } = store;
+
+        dispatch(handleToggleVideoMuted(!jitsiTrack.track.muted, true, true));
 
         if (jitsiTrack.getVideoType() === VIDEO_TYPE.DESKTOP) {
             store.dispatch(toggleScreensharing(false));
