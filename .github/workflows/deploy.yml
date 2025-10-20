@@ -89,7 +89,7 @@ jobs:
                       *This comment will be automatically updated when new commits are pushed.*
 
     test-preview:
-        name: Run Tests on Preview
+        name: Run Tests
         needs: deploy
         if: github.event_name == 'pull_request'
         uses: ./.github/workflows/test-preview.yml

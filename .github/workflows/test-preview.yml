@@ -84,19 +84,26 @@ jobs:
 
       - name: Run tests
         if: steps.extract-url.outputs.url_valid == 'true'
+        id: run-tests
         continue-on-error: true
         run: |
           # Set display for headless Chrome
           export DISPLAY=:99
+          # Suppress XKEYBOARD warnings
+          export XKB_LOG_LEVEL=critical
           Xvfb :99 -screen 0 1280x1024x24 &
           
           # Run tests
           npm run test
         env:
           DOTENV_CONFIG_PATH: tests/.env
+          XKB_LOG_LEVEL: critical
+          QT_X11_NO_MITSHM: 1
+          _JAVA_AWT_WM_NONREPARENTING: 1
 
       - name: Upload test results
         if: always()
+        id: upload-test-results
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ github.sha }}
@@ -107,30 +114,26 @@ jobs:
 
       - name: Upload Allure report
         if: always()
+        id: upload-allure-report
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ github.sha }}
           path: test-results/allure-report/
           retention-days: 30
 
-      - name: Parse test results and create summary
+      - name: Parse test results for PR comment
         if: always()
+        id: parse-results
         run: |
-          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
           PREVIEW_URL="${{ steps.extract-url.outputs.preview_url }}"
           URL_VALID="${{ steps.extract-url.outputs.url_valid }}"
           
           if [ "$URL_VALID" != "true" ]; then
-            echo "❌ **Status:** Failed - Invalid preview URL" >> $GITHUB_STEP_SUMMARY
-            echo "**Reason:** Could not extract valid preview URL from deployment" >> $GITHUB_STEP_SUMMARY
+            echo "test_status=failed" >> $GITHUB_OUTPUT
+            echo "test_reason=Invalid preview URL" >> $GITHUB_OUTPUT
+            echo "test_summary=❌ **Status:** Failed - Invalid preview URL" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
-          echo "✅ **Status:** Tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "**Preview URL:** ${PREVIEW_URL}/meet/" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           
           # Try to parse JUnit results if available
           if [ -f "test-results/results-0.xml" ]; then
@@ -138,22 +141,33 @@ jobs:
             FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
             ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
             
-            echo "**Test Results:**" >> $GITHUB_STEP_SUMMARY
-            echo "- Total Tests: $TESTS" >> $GITHUB_STEP_SUMMARY
-            echo "- Failures: $FAILURES" >> $GITHUB_STEP_SUMMARY
-            echo "- Errors: $ERRORS" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            # Determine overall test status
+            if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+              echo "test_status=failed" >> $GITHUB_OUTPUT
+              echo "test_summary=❌ **Status:** Tests failed" >> $GITHUB_OUTPUT
+            else
+              echo "test_status=passed" >> $GITHUB_OUTPUT
+              echo "test_summary=✅ **Status:** Tests passed" >> $GITHUB_OUTPUT
+            fi
+            
+            echo "test_results=**Test Results:**" >> $GITHUB_OUTPUT
+            echo "test_results<<EOF" >> $GITHUB_OUTPUT
+            echo "- Total Tests: $TESTS" >> $GITHUB_OUTPUT
+            echo "- Failures: $FAILURES" >> $GITHUB_OUTPUT
+            echo "- Errors: $ERRORS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "**Note:** Detailed test results not available" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            # Check if test step failed but no results file exists
+            if [ "${{ steps.run-tests.outcome }}" == "failure" ]; then
+              echo "test_status=failed" >> $GITHUB_OUTPUT
+              echo "test_summary=❌ **Status:** Tests failed (no detailed results available)" >> $GITHUB_OUTPUT
+              echo "test_results=**Note:** Test execution failed - no detailed results available" >> $GITHUB_OUTPUT
+            else
+              echo "test_status=unknown" >> $GITHUB_OUTPUT
+              echo "test_summary=⚠️ **Status:** Tests completed (detailed results not available)" >> $GITHUB_OUTPUT
+              echo "test_results=**Note:** Detailed test results not available" >> $GITHUB_OUTPUT
+            fi
           fi
-          
-          echo "**Artifacts:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Test Results: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- Allure Report: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Tests run against preview deployment: ${PREVIEW_URL}/meet/*" >> $GITHUB_STEP_SUMMARY
 
       - name: Update PR comment with test results
         if: github.event_name == 'pull_request'
@@ -163,15 +177,45 @@ jobs:
           message: |
             ## 🧪 Test Results
 
-            **Status:** ${{ steps.extract-url.outputs.url_valid == 'true' && '✅ Tests completed' || '❌ Failed - Invalid preview URL' }}
+            ${{ steps.parse-results.outputs.test_summary }}
             **Preview URL:** ${{ steps.extract-url.outputs.url_valid == 'true' && format('[{0}/meet/testmeeting1]({0}/meet/testmeeting1)', steps.extract-url.outputs.preview_url) || 'Preview URL not available' }}
 
-            ${{ steps.extract-url.outputs.url_valid != 'true' && '**Reason:** Could not extract valid preview URL from deployment' || '' }}
+            ${{ steps.parse-results.outputs.test_reason && format('**Reason:** {0}', steps.parse-results.outputs.test_reason) || '' }}
+
+            ${{ steps.parse-results.outputs.test_results }}
 
             **Artifacts:**
-            - [Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) - Download from workflow run
-            - [Allure Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) - Download from workflow run
+            - [📊 Test Results](${{ steps.upload-test-results.outputs.artifact-url }})
+            - [📈 Allure Report](${{ steps.upload-allure-report.outputs.artifact-url }})
 
             ---
             *This comment will be automatically updated when new commits are pushed.*
+
+      - name: Fail job if tests failed
+        if: always()
+        run: |
+          # Only fail if the test step actually failed
+          if [ "${{ steps.run-tests.outcome }}" == "failure" ]; then
+            # Check if we have test result files to determine the type of failure
+            if [ -f "test-results/results-0.xml" ]; then
+              FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
+              ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
+              
+              if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+                echo "❌ Tests failed with $FAILURES failures and $ERRORS errors"
+                echo "This is a test failure - failing the job"
+                exit 1
+              else
+                echo "❌ Test execution failed but no test failures detected"
+                echo "This might be a setup issue - failing the job"
+                exit 1
+              fi
+            else
+              echo "❌ Test execution failed and no result files found"
+              echo "This is likely a setup failure - failing the job"
+              exit 1
+            fi
+          else
+            echo "✅ Test step completed successfully"
+          fi
 
