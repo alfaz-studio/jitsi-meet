@@ -10,6 +10,8 @@ jobs:
     deploy:
         name: Cloudflare
         runs-on: ubuntu-latest
+        outputs:
+            preview-url: ${{ steps.preview-deploy.outputs.deployment-url }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -86,22 +88,10 @@ jobs:
                       ---
                       *This comment will be automatically updated when new commits are pushed.*
 
-            - name: Trigger test workflow
-              if: github.event_name == 'pull_request' && steps.preview-deploy.outputs.deployment-url
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const previewUrl = '${{ steps.preview-deploy.outputs.deployment-url }}';
-                      console.log('Triggering test workflow with preview URL:', previewUrl);
-                      
-                      await github.rest.actions.createWorkflowDispatch({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          workflow_id: 'test-preview.yml',
-                          ref: context.payload.pull_request.head.ref,
-                          inputs: {
-                              preview_url: previewUrl
-                          }
-                      });
-                      
-                      console.log('Test workflow triggered successfully');
+    test-preview:
+        name: Run Tests on Preview
+        needs: deploy
+        if: github.event_name == 'pull_request'
+        uses: ./.github/workflows/test-preview.yml
+        with:
+            preview_url: ${{ needs.deploy.outputs.preview-url }}

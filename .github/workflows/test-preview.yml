@@ -1,12 +1,13 @@
 name: Test Preview Deployment
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       preview_url:
-        description: 'Preview URL to test (optional - will be extracted from deploy workflow if not provided)'
-        required: false
+        description: 'Preview URL to test'
+        required: true
         type: string
+
 
 jobs:
   test-preview:
@@ -20,7 +21,8 @@ jobs:
       - name: Extract preview URL
         id: extract-url
         run: |
-          PREVIEW_URL="${{ github.event.inputs.preview_url }}"
+          PREVIEW_URL="${{ inputs.preview_url }}"
+          
           echo "Preview URL: $PREVIEW_URL"
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
           
@@ -64,6 +66,9 @@ jobs:
           # Browser configuration
           HEADLESS=true
           ALLOW_INSECURE_CERTS=true
+          
+          # Additional Chrome arguments for stability
+          CHROME_ARGS=--disable-web-security --disable-features=VizDisplayCompositor --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-field-trial-config --disable-back-forward-cache --disable-ipc-flooding-protection --enable-features=NetworkService,NetworkServiceLogging --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --disable-extensions --disable-plugins --disable-default-apps --disable-sync --disable-translate --hide-scrollbars --mute-audio --no-sandbox --disable-dev-shm-usage --disable-setuid-sandbox --disable-gpu --disable-software-rasterizer --disable-background-networking --no-default-browser-check --no-pings --no-zygote --single-process
           
           # Video capture file (absolute path)
           VIDEO_CAPTURE_FILE=${{ github.workspace }}/tests/resources/fakeVideoStream.y4m
