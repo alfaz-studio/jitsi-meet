@@ -484,7 +484,7 @@ var config = {
         validatorRegExpString: '^(?:[a-zA-Z0-9]{4}(?:-(?!$)|$)){4}',
 
         // Documentation reference for the live streaming feature.
-        // helpLink: 'https://jitsi.org/live'
+        helpLink: 'https://support.google.com/youtube/answer/2474026'
     },
 
     // DEPRECATED. Use liveStreaming.enabled instead.
