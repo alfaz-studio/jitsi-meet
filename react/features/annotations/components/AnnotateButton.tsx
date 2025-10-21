@@ -21,8 +21,8 @@ interface IProps extends AbstractButtonProps {
 class AnnotateButton extends AbstractButton<IProps> {
     accessibilityLabel = 'toolbar.accessibilityLabel.annotate';
     icon = IconAnnotate;
-    label = 'toolbar.annotate';
-    tooltip = 'toolbar.annotateTooltip';
+    label = 'toolbar.accessibilityLabel.annotate';
+    tooltip = 'toolbar.accessibilityLabel.annotateTooltip';
 
     /**
      * Handles clicking the button to open the annotation tool URL.
@@ -33,16 +33,13 @@ class AnnotateButton extends AbstractButton<IProps> {
     _handleClick() {
         let url = '';
 
-        // Use the utility functions to check the OS.
         if (isMacOS()) {
-        // if(true){
-            url = 'https://github.com/epilande/Annotate';
+            url = 'https://github.com/epilande/Annotate/releases/latest';
         } else if (isWindows()) {
             url = 'https://aka.ms/getPowertoys';
         }
 
         if (url) {
-            // Open the URL in a new tab. 'noopener' and 'noreferrer' are for security.
             window.open(url, '_blank', 'noopener,noreferrer');
         }
     }
