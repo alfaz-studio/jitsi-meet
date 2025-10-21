@@ -36,6 +36,10 @@ body {
     overscroll-behavior-y: contain !important;
 }
 
+#react {
+    height: 100%;
+}
+
 /**
  * This will hide the focus indicator if an element receives focus via the mouse,
  * but it will still show up on keyboard focus, thus preserving accessibility.

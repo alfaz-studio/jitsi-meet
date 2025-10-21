@@ -2,6 +2,7 @@ import { throttle } from 'lodash-es';
 import React, { useCallback, useState } from 'react';
 import { WithTranslation } from 'react-i18next';
 import { connect as reactReduxConnect, useDispatch, useSelector, useStore } from 'react-redux';
+import { makeStyles } from 'tss-react/mui';
 
 // @ts-expect-error
 import VideoLayout from '../../../../../modules/UI/videolayout/VideoLayout';
@@ -463,7 +464,16 @@ function _mapStateToProps(state: IReduxState) {
     };
 }
 
+const useStyles = makeStyles()(() => {
+    return {
+        conferenceWrapper: {
+            height: '100%'
+        }
+    };
+});
+
 export default reactReduxConnect(_mapStateToProps)(translate(props => {
+    const { classes } = useStyles();
     const dispatch = useDispatch();
     const store = useStore();
 
@@ -516,6 +526,7 @@ export default reactReduxConnect(_mapStateToProps)(translate(props => {
 
     return (
         <div
+            className = { classes.conferenceWrapper }
             onDragEnter = { handleDragEnter }
             onDragLeave = { handleDragLeave }
             onDragOver = { handleDragOver }
