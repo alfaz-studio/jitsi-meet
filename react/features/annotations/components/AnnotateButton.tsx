@@ -19,10 +19,10 @@ interface IProps extends AbstractButtonProps {
  * annotation tool based on the user's operating system.
  */
 class AnnotateButton extends AbstractButton<IProps> {
-    accessibilityLabel = 'toolbar.accessibilityLabel.annotate';
-    icon = IconAnnotate;
-    label = 'toolbar.accessibilityLabel.annotate';
-    tooltip = 'toolbar.accessibilityLabel.annotateTooltip';
+    override accessibilityLabel = 'toolbar.accessibilityLabel.annotate';
+    override icon = IconAnnotate;
+    override label = 'toolbar.accessibilityLabel.annotate';
+    override tooltip = 'toolbar.accessibilityLabel.annotateTooltip';
 
     /**
      * Handles clicking the button to open the annotation tool URL.
@@ -30,7 +30,7 @@ class AnnotateButton extends AbstractButton<IProps> {
      * @protected
      * @returns {void}
      */
-    _handleClick() {
+    override _handleClick() {
         let url = '';
 
         if (isMacOS()) {
@@ -51,7 +51,7 @@ class AnnotateButton extends AbstractButton<IProps> {
      * @override
      * @returns {React.ReactNode | null}
      */
-    render(): React.ReactNode | null {
+    override render(): React.ReactNode | null {
         return this.props._visible ? super.render() : null;
     }
 }
