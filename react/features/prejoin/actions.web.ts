@@ -1,9 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { IStore } from '../app/types';
+import { LOGIN } from '../authentication/actionTypes';
+import DuplicateTabManager from '../base/app/DuplicateTabManager';
 import { updateConfig } from '../base/config/actions';
 import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions';
 import { connect } from '../base/connection/actions';
+import { JWT_VALIDATION_ERRORS } from '../base/jwt/constants';
+import { validateJwt } from '../base/jwt/functions';
 import { createLocalTrack } from '../base/lib-jitsi-meet/functions';
 import { isVideoMutedByUser } from '../base/media/functions';
 import { updateSettings } from '../base/settings/actions';
@@ -36,6 +40,7 @@ import {
     isJoinByPhoneDialogVisible
 } from './functions.any';
 import logger from './logger';
+import { getStatusFromErrors } from './reducer';
 
 const dialOutStatusToKeyMap = {
     INITIATED: 'presenceStatus.calling',
@@ -184,6 +189,26 @@ export function dialOut(onSuccess: Function, onFail: Function) {
 }
 
 /**
+ * Action to continue the conference joining process after the duplicate tab check has passed.
+ * This is not meant to be called directly.
+ *
+ * @param {Object} options - The config options.
+ * @param {string?} jid - The XMPP user's ID.
+ * @param {string?} password - The XMPP user's password.
+ * @returns {Function}
+ */
+function continueJoining(options?: Object, jid?: string, password?: string) {
+    return function(dispatch: IStore['dispatch']) {
+        options && dispatch(updateConfig(options));
+        logger.info('Duplicate tab check passed. Dispatching connect.');
+        dispatch(connect(jid, password))
+            .catch(() => {
+                // This is handled in base/connection/actions.
+            });
+    };
+}
+
+/**
  * Action used to start the conference.
  *
  * @param {Object} options - The config options that override the default ones (if any).
@@ -195,24 +220,29 @@ export function dialOut(onSuccess: Function, onFail: Function) {
 export function joinConference(options?: Object, ignoreJoiningInProgress = false,
         jid?: string, password?: string) {
     return function(dispatch: IStore['dispatch'], getState: IStore['getState']) {
+        const state = getState();
+        const { jwt } = state['features/base/jwt'];
+
+        if (jwt && validateJwt(jwt).some(e =>
+            (e as any).key === JWT_VALIDATION_ERRORS.TOKEN_EXPIRED)) {
+            dispatch({ type: LOGIN });
+
+            return;
+        }
+
         if (!ignoreJoiningInProgress) {
-            const state = getState();
             const { joiningInProgress } = state['features/prejoin'];
 
             if (joiningInProgress) {
                 return;
             }
-
             dispatch(setJoiningInProgress(true));
         }
 
-        options && dispatch(updateConfig(options));
+        const onSuccess = () => dispatch(continueJoining(options, jid, password));
 
-        logger.info('Dispatching connect from joinConference.');
-        dispatch(connect(jid, password))
-        .catch(() => {
-            // There is nothing to do here. This is handled and dispatched in base/connection/actions.
-        });
+        // Start the non-blocking check.
+        DuplicateTabManager.checkBeforeJoining(onSuccess);
     };
 }
 
@@ -340,6 +370,25 @@ export function replaceVideoTrackById(deviceId: string) {
 }
 
 /**
+ * An action that checks the current permissions and device errors and updates the device status accordingly.
+ *
+ * @param {Object} errors - The device errors, if any.
+ * @returns {Function}
+ */
+export function setDeviceStatusFromSrc(errors: Object = {}) {
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const state = getState();
+        const newStatus = getStatusFromErrors(errors, state);
+
+        if (newStatus.deviceStatusType === 'ok') {
+            dispatch(setDeviceStatusOk(newStatus.deviceStatusText));
+        } else {
+            dispatch(setDeviceStatusWarning(newStatus.deviceStatusText));
+        }
+    };
+}
+
+/**
  * Sets the device status as OK with the corresponding text.
  *
  * @param {string} deviceStatusText - The text to be set.
@@ -444,9 +493,14 @@ export function setJoinByPhoneDialogVisiblity(value: boolean) {
  * @returns {Object}
  */
 export function setPrejoinDeviceErrors(value: Object) {
-    return {
-        type: SET_PREJOIN_DEVICE_ERRORS,
-        value
+    return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        const state = getState();
+
+        dispatch({
+            type: SET_PREJOIN_DEVICE_ERRORS,
+            value,
+            state
+        });
     };
 }
 

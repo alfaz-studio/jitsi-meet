@@ -27,13 +27,23 @@ export function isJoinByPhoneButtonVisible(state: IReduxState): boolean {
  * @returns {boolean}
  */
 export function isDeviceStatusVisible(state: IReduxState): boolean {
-    return !(isAudioMuted(state) && isVideoMutedByUser(state))
-        && !state['features/base/config'].startSilent
+    const { deviceStatusType } = state['features/prejoin'];
+    const { startSilent, disableInitialGUM } = state['features/base/config'];
 
-        // This handles the case where disableInitialGUM=true and we haven't yet tried to create any tracks. In this
-        // case we shouldn't display the the device status indicator. But once we create some tracks we can show it
-        // because we would know if we created the tracks successfully or not.
-        && (!state['features/base/config'].disableInitialGUM || state['features/base/tracks']?.length > 0);
+    // The status is always visible if there is a warning to display.
+    if (deviceStatusType === 'warning') {
+        return true;
+    }
+
+    // This handles the case where disableInitialGUM=true and we haven't yet tried to create any tracks. In this
+    // case we shouldn't display the the device status indicator. But once we create some tracks we can show it
+    // because we would know if we created the tracks successfully or not.
+    const isMuted = isAudioMuted(state) && isVideoMutedByUser(state);
+    const hasTracks = state['features/base/tracks']?.length > 0;
+
+    return !isMuted
+        && !startSilent
+        && (!disableInitialGUM || hasTracks);
 }
 
 /**

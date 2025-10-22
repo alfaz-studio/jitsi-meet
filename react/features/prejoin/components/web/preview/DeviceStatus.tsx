@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
+import { IReduxState } from '../../../../app/types';
+import { hasDevicePermission } from '../../../../base/devices/functions.any';
 import { ColorPalette } from '../../../../base/styles/components/styles/ColorPalette';
-import { withPixelLineHeight } from '../../../../base/styles/functions.web';
+import { setDeviceStatusFromSrc } from '../../../actions.web';
 import {
     getDeviceStatusText,
     getDeviceStatusType
 } from '../../../functions';
+import PermissionsGuideDialog from '../dialogs/PermissionsGuideDialog';
 
 const useStyles = makeStyles<{ deviceStatusType?: string; }>()((theme, { deviceStatusType = 'pending' }) => {
     return {
@@ -16,12 +19,12 @@ const useStyles = makeStyles<{ deviceStatusType?: string; }>()((theme, { deviceS
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            ...withPixelLineHeight(theme.typography.bodyShortRegular),
+            ...theme.typography.bodyShortRegular,
             color: '#fff',
             marginTop: theme.spacing(4),
 
             '& span': {
-                marginLeft: theme.spacing(3)
+                marginLeft: theme.spacing(2)
             },
 
             '&.device-status-error': {
@@ -43,6 +46,15 @@ const useStyles = makeStyles<{ deviceStatusType?: string; }>()((theme, { deviceS
             height: '16px',
             borderRadius: '100%',
             backgroundColor: deviceStatusType === 'ok' ? theme.palette.success01 : ColorPalette.darkGrey
+        },
+        helpButton: {
+            marginTop: theme.spacing(4),
+            marginLeft: '0',
+            background: 'none',
+            border: 'none',
+            color: theme.palette.link01,
+            cursor: 'pointer',
+            padding: 0,
         }
     };
 });
@@ -55,24 +67,55 @@ const useStyles = makeStyles<{ deviceStatusType?: string; }>()((theme, { deviceS
  */
 function DeviceStatus() {
     const { t } = useTranslation();
-    const deviceStatusType = useSelector(getDeviceStatusType);
+    const dispatch = useDispatch();
+    const deviceStatusType = useSelector(getDeviceStatusType) as string | undefined;
     const deviceStatusText = useSelector(getDeviceStatusText);
+    const hasAudioPermission = useSelector((state: IReduxState) => hasDevicePermission(state, 'audio'));
+    const hasVideoPermission = useSelector((state: IReduxState) => hasDevicePermission(state, 'video'));
     const { classes, cx } = useStyles({ deviceStatusType });
     const hasError = deviceStatusType === 'warning';
+    const [ showGuide, setShowGuide ] = useState(false);
     const containerClassName = cx(classes.deviceStatus, { 'device-status-error': hasError });
 
+
+    useEffect(() => {
+        // Every time the permissions change, just re-calculate and set the status.
+        dispatch(setDeviceStatusFromSrc());
+    }, [ hasAudioPermission, hasVideoPermission, dispatch ]);
+
+    const handleOpenGuide = useCallback(() => {
+        setShowGuide(true);
+    }, []);
+
+    const handleCloseGuide = useCallback(() => {
+        setShowGuide(false);
+    }, []);
+
     return (
-        <div
-            className = { containerClassName }
-            role = 'alert'
-            tabIndex = { -1 }>
-            {!hasError && <div className = { classes.indicator } />}
-            <span
-                aria-level = { 3 }
-                role = 'heading'>
-                {hasError ? t('prejoin.errorNoPermissions') : t(deviceStatusText ?? '')}
-            </span>
-        </div>
+        <>
+            <div
+                className = { containerClassName }
+                role = 'alert'
+                tabIndex = { -1 }>
+                {!hasError && <div className = { classes.indicator } />}
+                <span
+                    aria-level = { 3 }
+                    role = 'heading'>
+                    {hasError ? t('prejoin.errorNoPermissions') : t(typeof deviceStatusText === 'string' ? deviceStatusText : '')}
+                    {hasError && (
+                        <span
+                            className = { classes.helpButton }
+                            onClick = { handleOpenGuide }>
+                            {t('prejoin.permissionsGuide.needHelp')}
+                        </span>
+                    )}
+                </span>
+            </div>
+
+            {showGuide && (
+                <PermissionsGuideDialog onClose = { handleCloseGuide } />
+            )}
+        </>
     );
 }
 

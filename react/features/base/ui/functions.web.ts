@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Theme, adaptV4Theme, createTheme } from '@mui/material/styles';
+import { Theme, createTheme } from '@mui/material/styles';
 
 import { ITypography, IPalette as Palette1 } from '../ui/types';
 
 import { createColorTokens, createTypographyTokens } from './utils';
+
+export * from './functions.any';
 
 declare module '@mui/material/styles' {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -29,7 +31,7 @@ interface ThemeProps {
  * @returns {Object}
  */
 export function createWebTheme({ font, colorMap, shape, spacing, typography, breakpoints }: ThemeProps) {
-    return createTheme(adaptV4Theme({
+    return createTheme({
         spacing,
         palette: createColorTokens(colorMap),
         shape,
@@ -39,7 +41,7 @@ export function createWebTheme({ font, colorMap, shape, spacing, typography, bre
             ...createTypographyTokens(typography)
         },
         breakpoints
-    }));
+    });
 }
 
 /**

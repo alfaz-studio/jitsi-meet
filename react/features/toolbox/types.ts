@@ -21,11 +21,13 @@ export type ToolbarButton = 'camera' |
     'closedcaptions' |
     'desktop' |
     'download' |
+    'downloaddata' |
     'embedmeeting' |
     'etherpad' |
     'feedback' |
     'filmstrip' |
     'fullscreen' |
+    'pip' |
     'hangup' |
     'help' |
     'highlight' |

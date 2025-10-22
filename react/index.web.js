@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import { App } from './features/app/components/App.web';
 import { getLogger } from './features/base/logging/functions';
@@ -9,7 +9,7 @@ import DialInSummaryApp from './features/invite/components/dial-in-summary/web/D
 import PrejoinApp from './features/prejoin/components/web/PrejoinApp';
 import WhiteboardApp from './features/whiteboard/components/web/WhiteboardApp';
 
-const logger = getLogger('index.web');
+const logger = getLogger('app:index.web');
 
 // Add global loggers.
 window.addEventListener('error', ev => {
@@ -77,9 +77,9 @@ globalNS.renderEntryPoint = ({
     props = {},
     elementId = 'react'
 }) => {
-    /* eslint-disable-next-line react/no-deprecated */
-    ReactDOM.render(
-        <Component { ...props } />,
-        document.getElementById(elementId)
+    const root = createRoot(document.getElementById(elementId));
+
+    root.render(
+        <Component { ...props } />
     );
 };
