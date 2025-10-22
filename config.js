@@ -29,6 +29,7 @@ var domain = window.location.host;
 var isProd = domain === 'sonacove.com' || domain === 'www.sonacove.com';
 var authdomain = isProd ? 'auth.sonacove.com/auth' : 'staj.sonacove.com/auth';
 var meetdomain = isProd ? 'meet.sonacove.com' : 'staj.sonacove.com';
+var apidomain = isProd ? 'sonacove.com' : 'sonacove.catfurr.workers.dev';
 var enableJaaS = false;
 
 var config = {
@@ -1988,14 +1989,16 @@ var config = {
     disableCameraTintForeground: false,
 
     // File sharign service.
-    // fileSharing: {
-    //     // The URL of the file sharing service API. See resources/file-sharing.yaml for more details.
-    //     apiUrl: 'https://example.com',
-    //     // Whether the file sharing service is enabled or not.
-    //     enabled: true,
-    //     // Maximum file size limit (-1 value disables any file size limit check)
-    //     maxFileSize: 50,
-    // },
+    fileSharing: {
+        // The URL of the file sharing service API. See resources/file-sharing.yaml for more details.
+        apiUrl: `https://${apidomain}/api/file-sharing`,
+
+        // Whether the file sharing service is enabled or not.
+        enabled: true,
+
+        // Maximum file size limit (-1 value disables any file size limit check)
+        maxFileSize: 50,
+    },
 };
 
 // Set the default values for JaaS customers
