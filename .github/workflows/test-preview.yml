@@ -12,8 +12,8 @@ on:
 jobs:
   test-preview:
     name: Run Tests on Preview
-    runs-on: ubuntu-latest
-    
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,10 +22,10 @@ jobs:
         id: extract-url
         run: |
           PREVIEW_URL="${{ inputs.preview_url }}"
-          
+
           echo "Preview URL: $PREVIEW_URL"
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
-          
+
           # Validate URL format
           if [[ "$PREVIEW_URL" =~ ^https?:// ]]; then
             echo "url_valid=true" >> $GITHUB_OUTPUT
@@ -39,7 +39,21 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
 
+      - name: Cache Chrome dependencies
+        id: cache-chrome-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives/
+            /usr/bin/chromium-browser
+            /usr/bin/chromedriver
+            /usr/bin/xvfb
+          key: chrome-deps-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            chrome-deps-${{ runner.os }}-
+
       - name: Install Chrome dependencies
+        if: steps.cache-chrome-deps.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -54,32 +68,32 @@ jobs:
         if: steps.extract-url.outputs.url_valid == 'true'
         run: |
           PREVIEW_URL="${{ steps.extract-url.outputs.preview_url }}"
-          
+
           cat > tests/.env << EOF
           # The base URL that will be used for the test
           BASE_URL=${PREVIEW_URL}/meet/
-          
+
           # Room name configuration
           ROOM_NAME_PREFIX=test
           ROOM_NAME_SUFFIX=grid
-          
+
           # Browser configuration
           HEADLESS=true
           ALLOW_INSECURE_CERTS=true
-          
+
           # Additional Chrome arguments for stability
           CHROME_ARGS=--disable-web-security --disable-features=VizDisplayCompositor --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-field-trial-config --disable-back-forward-cache --disable-ipc-flooding-protection --enable-features=NetworkService,NetworkServiceLogging --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --disable-extensions --disable-plugins --disable-default-apps --disable-sync --disable-translate --hide-scrollbars --mute-audio --no-sandbox --disable-dev-shm-usage --disable-setuid-sandbox --disable-gpu --disable-software-rasterizer --disable-background-networking --no-default-browser-check --no-pings --no-zygote --single-process
-          
+
           # Video capture file (absolute path)
           VIDEO_CAPTURE_FILE=${{ github.workspace }}/tests/resources/fakeVideoStream.y4m
-          
+
           # Test execution configuration
           MAX_INSTANCES=1
-          
+
           # Domain resolution
           RESOLVER_RULES=MAP localhost 127.0.0.1
           EOF
-          
+
           echo "Created tests/.env with BASE_URL: ${PREVIEW_URL}/meet/"
 
       - name: Run tests
@@ -92,7 +106,7 @@ jobs:
           # Suppress XKEYBOARD warnings
           export XKB_LOG_LEVEL=critical
           Xvfb :99 -screen 0 1280x1024x24 &
-          
+
           # Run tests
           npm run test
         env:
@@ -127,20 +141,20 @@ jobs:
         run: |
           PREVIEW_URL="${{ steps.extract-url.outputs.preview_url }}"
           URL_VALID="${{ steps.extract-url.outputs.url_valid }}"
-          
+
           if [ "$URL_VALID" != "true" ]; then
             echo "test_status=failed" >> $GITHUB_OUTPUT
             echo "test_reason=Invalid preview URL" >> $GITHUB_OUTPUT
             echo "test_summary=❌ **Status:** Failed - Invalid preview URL" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           # Try to parse JUnit results if available
           if [ -f "test-results/results-0.xml" ]; then
             TESTS=$(grep -o 'tests="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "unknown")
             FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
             ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
-            
+
             # Determine overall test status
             if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
               echo "test_status=failed" >> $GITHUB_OUTPUT
@@ -149,7 +163,7 @@ jobs:
               echo "test_status=passed" >> $GITHUB_OUTPUT
               echo "test_summary=✅ **Status:** Tests passed" >> $GITHUB_OUTPUT
             fi
-            
+
             echo "test_results=**Test Results:**" >> $GITHUB_OUTPUT
             echo "test_results<<EOF" >> $GITHUB_OUTPUT
             echo "- Total Tests: $TESTS" >> $GITHUB_OUTPUT
@@ -200,7 +214,7 @@ jobs:
             if [ -f "test-results/results-0.xml" ]; then
               FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
               ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
-              
+
               if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
                 echo "❌ Tests failed with $FAILURES failures and $ERRORS errors"
                 echo "This is a test failure - failing the job"
