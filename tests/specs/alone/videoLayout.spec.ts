@@ -1,7 +1,16 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
+
 describe('Video Layout', () => {
-    it('join participant', () => ensureOneParticipant());
+    it('join participant', () => ensureOneParticipant({
+        configOverwrite: {
+            // @ts-ignore
+            jwt: config.jwt.preconfiguredToken
+        }
+    }));
 
     it('check', async () => {
         const { p1 } = ctx;

@@ -1,4 +1,8 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant } from '../../helpers/participants';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
 
 /**
  * Tests that the digits only password feature works.
@@ -9,7 +13,9 @@ import { ensureOneParticipant } from '../../helpers/participants';
 describe('Lock Room with Digits only', () => {
     it('join participant', () => ensureOneParticipant({
         configOverwrite: {
-            roomPasswordNumberOfDigits: 5
+            roomPasswordNumberOfDigits: 5,
+            // @ts-ignore
+            jwt: config.jwt.preconfiguredToken
         }
     }));
 

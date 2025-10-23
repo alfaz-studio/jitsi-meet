@@ -1,8 +1,18 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant } from '../../helpers/participants';
 import { isDialInEnabled } from '../helpers/DialIn';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
+
 describe('Invite', () => {
-    it('join participant', () => ensureOneParticipant({ preferGenerateToken: true }));
+    it('join participant', () => ensureOneParticipant({
+        preferGenerateToken: true,
+        configOverwrite: {
+            // @ts-ignore
+            jwt: config.jwt.preconfiguredToken
+        }
+    }));
 
     it('url displayed', async () => {
         const { p1 } = ctx;
