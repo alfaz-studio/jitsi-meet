@@ -98,7 +98,7 @@ export class Participant {
         },
         disableAP: true,
         disable1On1Mode: true,
-        disableModeratorIndicator: true,
+        disableModeratorIndicator: false,
         enableTalkWhileMuted: false,
         gatherStats: true,
         p2p: {
