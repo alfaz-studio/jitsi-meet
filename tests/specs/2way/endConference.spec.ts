@@ -1,7 +1,16 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('End Conference', () => {
-    it('joining the meeting', () => ensureTwoParticipants());
+    it('joining the meeting', () => ensureTwoParticipants({
+        configOverwrite: {
+            // @ts-ignore
+            jwt: config.jwt.preconfiguredToken
+        },
+    }));
 
     it('hangup call and check', async () => {
         const { p1 } = ctx;

@@ -1,8 +1,20 @@
 import type { Participant } from '../../helpers/Participant';
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('UDP', () => {
-    it('joining the meeting', () => ensureTwoParticipants());
+    it('joining the meeting', () => ensureTwoParticipants({
+        configOverwrite: {
+            prejoinConfig: {
+                enabled: false
+            },
+            // @ts-ignore
+            jwt: config.jwt.preconfiguredToken
+        }
+    }));
 
     it('check', async () => {
         const { p1, p2 } = ctx;

@@ -1,40 +1,50 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config as testsConfig } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('DisplayName', () => {
-    it('joining the meeting', () => ensureTwoParticipants({ skipDisplayName: true }));
 
-    it('check change', async () => {
-        const { p1, p2 } = ctx;
+    it('should correctly handle display name changes and persistence', async function() {
 
-        // default remote display name
-        const defaultDisplayName = await p1.execute(() => config.defaultRemoteDisplayName);
+        await ensureTwoParticipants({
+            configOverwrite: {
+                prejoinConfig: { enabled: false },
+                // @ts-ignore
+                jwt: testsConfig.jwt.preconfiguredToken
+            },
+            skipWaitToJoin: true
+        });
+        let { p1, p2 } = ctx;
+
         const p1EndpointId = await p1.getEndpointId();
         const p2EndpointId = await p2.getEndpointId();
 
-        // Checks whether default display names are set and shown, when both sides still miss the display name.
-        expect(await p1.getFilmstrip().getRemoteDisplayName(p2EndpointId)).toBe(defaultDisplayName);
-        expect(await p2.getFilmstrip().getRemoteDisplayName(p1EndpointId)).toBe(defaultDisplayName);
+        expect(await p1.getFilmstrip().getRemoteDisplayName(p2EndpointId)).toBe('p2');
+        expect(await p2.getFilmstrip().getRemoteDisplayName(p1EndpointId)).toBe('za id');
 
         const randomName = `Name${Math.trunc(Math.random() * 1_000_000)}`;
 
         await p2.setLocalDisplayName(randomName);
+        await browser.pause(1000);
+
         expect(await p2.getLocalDisplayName()).toBe(randomName);
         expect(await p1.getFilmstrip().getRemoteDisplayName(p2EndpointId)).toBe(randomName);
-    });
-
-    it('check persistence', async () => {
-        const { p2 } = ctx;
-        const randomName = `Name${Math.trunc(Math.random() * 1_000_000)}`;
-
-        await p2.setLocalDisplayName(randomName);
-
-        expect(await p2.getLocalDisplayName()).toBe(randomName);
 
         await p2.hangup();
 
         await ensureTwoParticipants({
+            configOverwrite: {
+                prejoinConfig: { enabled: false },
+                // @ts-ignore
+                jwt: testsConfig.jwt.preconfiguredToken
+            },
             skipDisplayName: true
         });
+
+        p1 = ctx.p1;
+        p2 = ctx.p2;
 
         expect(await p2.getLocalDisplayName()).toBe(randomName);
     });

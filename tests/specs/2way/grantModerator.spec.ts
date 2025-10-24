@@ -1,8 +1,18 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant, ensureTwoParticipants } from '../../helpers/participants';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Grant moderator', () => {
     it('joining the meeting', async () => {
-        await ensureOneParticipant();
+        await ensureOneParticipant({
+            configOverwrite: {
+                // @ts-ignore
+                jwt: config.jwt.preconfiguredToken,
+            },
+            skipWaitToJoin: true
+        });
 
         if (await ctx.p1.execute(() => typeof APP.conference._room.grantOwner !== 'function')) {
             ctx.skipSuiteTests = true;
@@ -10,7 +20,12 @@ describe('Grant moderator', () => {
             return;
         }
 
-        await ensureTwoParticipants();
+        await ensureTwoParticipants({
+            configOverwrite: {
+                // @ts-ignore
+                jwt: config.jwt.preconfiguredToken,
+            },
+        });
     });
 
     it('grant moderator and validate', async () => {

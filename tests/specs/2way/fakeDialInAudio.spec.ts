@@ -1,7 +1,11 @@
 import process from 'node:process';
 
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant, ensureTwoParticipants } from '../../helpers/participants';
 import { cleanup, isDialInEnabled, waitForAudioFromDialInParticipant } from '../helpers/DialIn';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Fake Dial-In', () => {
     it('join participant', async () => {
@@ -14,7 +18,13 @@ describe('Fake Dial-In', () => {
             return;
         }
 
-        await ensureOneParticipant();
+        await ensureOneParticipant({
+            configOverwrite: {
+                // @ts-ignore
+                jwt: config.jwt.preconfiguredToken,
+            },
+            skipWaitToJoin: true
+        });
 
         // check dial-in is enabled, so skip
         if (await isDialInEnabled(ctx.p1)) {
@@ -34,7 +44,12 @@ describe('Fake Dial-In', () => {
             return;
         }
 
-        await ensureTwoParticipants();
+        await ensureTwoParticipants({
+            configOverwrite: {
+                // @ts-ignore
+                jwt: config.jwt.preconfiguredToken
+            }
+        });
     });
 
     it('wait for audio from second participant', async () => {

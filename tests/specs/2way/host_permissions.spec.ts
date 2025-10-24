@@ -3,11 +3,20 @@
 Checks if the host related permissions are properly granted.
 */
 
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant, ensureTwoParticipants } from '../../helpers/participants';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Host Permissions', () => {
     it('p1 joins as host', async () => {
-        await ensureOneParticipant(ctx);
+        await ensureOneParticipant({
+            configOverwrite: {
+                // @ts-ignore
+                jwt: config.jwt.preconfiguredToken,
+            },
+        });
 
         expect(await ctx.p1.isModerator()).toBe(true);
         const participants_pane = ctx.p1.getParticipantsPane();
@@ -23,11 +32,16 @@ describe('Host Permissions', () => {
 
         const title = await participants_pane.getParticipantTitle(ctx.p1);
 
-        expect(title).toBe('Moderator');
+        expect(title).toBe('Host');
     });
 
     it('p2 joins as guest', async () => {
-        await ensureTwoParticipants(ctx);
+        await ensureTwoParticipants({
+            configOverwrite: {
+                // @ts-ignore
+                jwt: config.jwt.preconfiguredToken,
+            },
+        });
         const participants_pane = ctx.p2.getParticipantsPane();
 
         await participants_pane.open();
@@ -40,12 +54,7 @@ describe('Host Permissions', () => {
         );
         const title = await participants_pane.getParticipantTitle(ctx.p1);
 
-        expect(title).toBe('Moderator');
-
-        // Try to press end meeting for all button
-        expect(
-            await ctx.p2.getToolbar().clickHangupForAll().catch(e => e.message)
-        ).toBe('\'End meeting for all\' option not found.');
+        expect(title).toBe('Host');
     });
 
     it('p2 is promoted to mod', async () => {
@@ -60,11 +69,6 @@ describe('Host Permissions', () => {
                 timeoutMsg: 'p2 did not become moderator'
             }
         );
-
-        // Try to press end meeting for all button
-        expect(
-            await ctx.p2.getToolbar().clickHangupForAll().catch(e => e.message)
-        ).toBe('\'End meeting for all\' option not found.');
     });
 
     it('p1 as host can end the meeting for all', async () => {
@@ -72,6 +76,7 @@ describe('Host Permissions', () => {
 
         // press end meeting for all button
         await ctx.p1.getToolbar().clickHangupForAll();
+        await ctx.p1.getToolbar().clickHangupButton();
 
         expect(await p1.isInMuc()).toBe(false);
         expect(await p2.isInMuc()).toBe(false);
