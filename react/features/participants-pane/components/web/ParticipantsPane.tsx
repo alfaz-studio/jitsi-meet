@@ -9,6 +9,7 @@ import { openDialog } from '../../../base/dialog/actions';
 import { isMobileBrowser } from '../../../base/environment/utils';
 import { IconCloseLarge, IconDotsHorizontal } from '../../../base/icons/svg';
 import { isLocalParticipantModerator } from '../../../base/participants/functions';
+import MobileBackButton from '../../../base/responsive-ui/mobileBackButtonUtils';
 import Button from '../../../base/ui/components/web/Button';
 import ClickableIcon from '../../../base/ui/components/web/ClickableIcon';
 import { BUTTON_TYPES } from '../../../base/ui/constants.web';
@@ -187,6 +188,17 @@ const ParticipantsPane = () => {
     const onToggleContext = useCallback(() => {
         setContextOpen(open => !open);
     }, []);
+
+
+    useEffect(() => {
+        if (paneOpen && isMobileBrowser()) {
+            const backButtonId = MobileBackButton.push(onClosePane);
+
+            return () => {
+                MobileBackButton.pop(backButtonId);
+            };
+        }
+    }, [ paneOpen ]);
 
     if (!paneOpen) {
         return null;

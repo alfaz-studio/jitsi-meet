@@ -1,12 +1,15 @@
-import React, { ReactNode, useCallback, useContext, useEffect } from 'react';
+import React, { ReactNode, useCallback, useContext, useEffect, useRef } from 'react';
 import { FocusOn } from 'react-focus-on';
 import { useTranslation } from 'react-i18next';
 import { keyframes } from 'tss-react';
 import { makeStyles } from 'tss-react/mui';
 
+import { isMobileBrowser } from '../../../environment/utils';
+import MobileBackButton from '../../../responsive-ui/mobileBackButtonUtils';
 import { isElementInTheViewport } from '../../functions.web';
 
 import { DialogTransitionContext } from './DialogTransition';
+
 
 const useStyles = makeStyles()(theme => {
     return {
@@ -158,6 +161,7 @@ const BaseDialog = ({
     title,
     titleKey
 }: IProps) => {
+    const backButtonId = useRef<string | null>(null);
     const { classes, cx } = useStyles();
     const { isUnmounting } = useContext(DialogTransitionContext);
     const { t } = useTranslation();
@@ -180,6 +184,17 @@ const BaseDialog = ({
 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [ handleKeyDown ]);
+
+    useEffect(() => {
+        if (isMobileBrowser() && typeof onClose === 'function') {
+            backButtonId.current = MobileBackButton.push(onClose);
+
+            return () => {
+                MobileBackButton.pop(backButtonId.current ?? undefined);
+                backButtonId.current = null;
+            };
+        }
+    }, []);
 
     return (
         <div
