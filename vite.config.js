@@ -1,18 +1,18 @@
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import react from '@vitejs/plugin-react';
+import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import react from '@vitejs/plugin-react';
-import svgr from 'vite-plugin-svgr';
-import basicSsl from '@vitejs/plugin-basic-ssl';
-import { exec } from 'child_process';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { promisify } from 'util';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+import svgr from 'vite-plugin-svgr';
 
 // Static files to copy to build root (dest: ".")
 const ROOT_FILES = [
     'fonts',
-    'images', 
+    'images',
     'lang',
     'sounds',
     '_unlock',
@@ -32,7 +32,7 @@ const ROOT_FILES = [
     'fonts.html',
     'head.html',
     'plugin.head.html',
-    'title.html',
+    'title.html'
 ];
 
 // Static files to copy to build/static folder
@@ -47,7 +47,7 @@ const STATIC_FILES = [
 // Files to copy to build/libs folder
 const LIB_FILES = [
     'node_modules/lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
-    'react/features/stream-effects/virtual-background/vendor/models/*.tflite',
+    'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 
 /**
@@ -64,8 +64,10 @@ function processSSI(content, depth = 0, includedFiles = new Set(), baseDir = pro
 
     // SSI patterns to handle
     const patterns = [
+
         // Include directive: <!--#include virtual="/path/to/file" -->
         /<!--#include\s+virtual="([^"]+)"\s*-->/g,
+
         // Echo directive: <!--# echo var="variable" default="defaultValue" -->
         /<!--#\s+echo\s+var="([^"]+)"(?:\s+default="([^"]*)")?\s*-->/g
     ];
@@ -74,6 +76,7 @@ function processSSI(content, depth = 0, includedFiles = new Set(), baseDir = pro
 
     if (depth >= MAX_DEPTH) {
         console.warn(`SSI processing reached max depth of ${MAX_DEPTH}, stopping recursion`);
+
         return result;
     }
 
@@ -87,11 +90,13 @@ function processSSI(content, depth = 0, includedFiles = new Set(), baseDir = pro
 
             if (includedFiles.has(absolutePath)) {
                 console.warn(`SSI circular include detected: ${includePath}`);
+
                 return '<!-- SSI circular include detected -->';
             }
 
             if (fs.existsSync(absolutePath)) {
                 const fileContent = fs.readFileSync(absolutePath, 'utf8');
+
                 includedFiles.add(absolutePath);
 
                 // Recursively process the included file
@@ -102,23 +107,27 @@ function processSSI(content, depth = 0, includedFiles = new Set(), baseDir = pro
                     path.dirname(absolutePath),
                     rootDir
                 );
+
                 return processedContent;
-            } else {
-                console.warn(`SSI include file not found: ${absolutePath}`);
-                return '<!-- SSI include file not found -->';
             }
+            console.warn(`SSI include file not found: ${absolutePath}`);
+
+            return '<!-- SSI include file not found -->';
+
         } catch (err) {
             console.error(`SSI include error for ${includePath}:`, err);
+
             return `<!-- SSI error: ${err.message} -->`;
         }
     });
 
     // Process echo directives (for environment variables or placeholders)
-    result = result.replace(patterns[1], (fullMatch, varName, defaultValue = '') => {
+    result = result.replace(patterns[1], (fullMatch, varName, defaultValue = '') =>
+
         // TODO: For now, we'll just return the default value or empty string
         // In a real implementation, you might want to resolve actual environment variables
-        return defaultValue || '';
-    });
+        defaultValue || ''
+    );
 
     return result;
 }
@@ -145,20 +154,23 @@ function createSSIMiddleware(server, isPreview = false) {
 
         // Heuristics: handle root, directories, and explicit .html files
         const wantsHtml = pathname === '/' || pathname.endsWith('/') || pathname.endsWith('.html') || (req.headers.accept || '').includes('text/html');
+
         if (!wantsHtml) {
             return next();
         }
 
         let candidatePath = pathname;
+
         if (candidatePath === '/') {
             candidatePath = '/index.html';
         } else if (candidatePath.endsWith('/')) {
-            candidatePath = candidatePath + 'index.html';
+            candidatePath = `${candidatePath}index.html`;
         } else if (!path.extname(candidatePath)) {
-            candidatePath = candidatePath + '.html';
+            candidatePath = `${candidatePath}.html`;
         }
 
         const filePath = path.join(htmlRoot, candidatePath.replace(/^\//, ''));
+
         if (!fs.existsSync(filePath)) {
             return next();
         }
@@ -177,9 +189,11 @@ function createSSIMiddleware(server, isPreview = false) {
                 if (!isPreview) {
                     // Let Vite inject HMR and transform HTML in dev
                     const transformed = await server.transformIndexHtml(candidatePath, processed);
+
                     res.setHeader('Content-Type', 'text/html; charset=utf-8');
                     res.statusCode = 200;
                     res.end(transformed);
+
                     return;
                 }
 
@@ -211,18 +225,22 @@ function deployLocalPlugin(options = {}) {
             try {
                 const execAsync = promisify(exec);
                 const scriptFullPath = path.resolve(process.cwd(), scriptPath);
+
                 if (fs.existsSync(scriptFullPath)) {
                     const stats = fs.statSync(scriptFullPath);
+
                     if (stats.isFile()) {
                         // Check if script is executable (Unix-like systems)
-                        const isExecutable = process.platform === 'win32' || 
-                            (stats.mode & parseInt('111', 8)) !== 0;
+                        const isExecutable = process.platform === 'win32'
+                            // eslint-disable-next-line no-bitwise
+                            || (stats.mode & parseInt('111', 8)) !== 0;
 
                         if (isExecutable) {
                             const { stdout, stderr } = await execAsync(scriptFullPath, {
                                 cwd: process.cwd(),
                                 timeout
                             });
+
                             stdout && console.log('Deploy script output:', stdout);
                             stderr && console.warn('Deploy script warnings:', stderr);
                         }
@@ -264,74 +282,101 @@ export default defineConfig(({ mode }) => {
                     server.middlewares.use(createSSIMiddleware(server, true));
                 }
             },
-            ...(analyzeBundle ? [
+            ...analyzeBundle ? [
                 visualizer({
                     filename: './build/app-stats.html',
                     open: true,
                     gzipSize: true,
                     brotliSize: true
-                }),
-            ] : []),
-            ...(isProduction ? [
+                })
+            ] : [],
+            ...isProduction ? [
                 deployLocalPlugin({
-                    scriptPath: './deploy-local.sh',
+                    scriptPath: './deploy-local.sh'
                 }),
                 viteStaticCopy({
                     structured: false,
                     targets: [
+
                         // Root files
-                        ...ROOT_FILES.map(src => ({ src, dest: '.', overwrite: 'error' })),
+                        ...ROOT_FILES.map(src => {
+                            return { src,
+                                dest: '.',
+                                overwrite: 'error' };
+                        }),
+
                         // Static files
-                        ...STATIC_FILES.map(src => ({ src, dest: 'static', overwrite: 'error' })),
+                        ...STATIC_FILES.map(src => {
+                            return { src,
+                                dest: 'static',
+                                overwrite: 'error' };
+                        }),
+
                         // Library files
-                        ...LIB_FILES.map(src => ({ src, dest: 'libs', overwrite: 'error' })),
+                        ...LIB_FILES.map(src => {
+                            return { src,
+                                dest: 'libs',
+                                overwrite: 'error' };
+                        }),
                         {
                             src: `node_modules/@jitsi/excalidraw/dist/excalidraw-assets${isProduction ? '' : '-dev'}`,
                             dest: 'libs',
                             overwrite: 'error'
-                        },
+                        }
                     ]
-                }),
-            ] : []),
+                })
+            ] : [],
             viteStaticCopy({
                 structured: false,
                 targets: [
+
                     // Root files
-                    ...['node_modules/@matrix-org/olm/olm.wasm',
+                    ...[ 'node_modules/@matrix-org/olm/olm.wasm',
                         'node_modules/@jitsi/rnnoise-wasm/dist/rnnoise.wasm',
                         'react/features/stream-effects/virtual-background/vendor/tflite/*.wasm',
                         'node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm',
-                        'node_modules/@vladmandic/human-models/models/{blazeface-front.bin,blazeface-front.json,emotion.bin,emotion.json}',
-                        ].map(src => ({ src, dest: '.', overwrite: 'error' })),
+                        'node_modules/@vladmandic/human-models/models/{blazeface-front.bin,blazeface-front.json,emotion.bin,emotion.json}'
+                    ].map(src => {
+                        return { src,
+                            dest: '.',
+                            overwrite: 'error' };
+                    }),
+
                     // Library files
-                    ...['node_modules/lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
+                    ...[ 'node_modules/lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
                         'react/features/stream-effects/virtual-background/vendor/models/*.tflite',
-                        `node_modules/@jitsi/excalidraw/dist/excalidraw-assets${isProduction ? '' : '-dev'}`,
-                        ].map(src => ({ src, dest: 'libs', overwrite: 'error' })),
+                        `node_modules/@jitsi/excalidraw/dist/excalidraw-assets${isProduction ? '' : '-dev'}`
+                    ].map(src => {
+                        return { src,
+                            dest: 'libs',
+                            overwrite: 'error' };
+                    })
                 ]
-            }),
+            })
         ],
 
         define: {
             '__DEV__': !isProduction,
+
             // Provide process for browser compatibility
             global: 'globalThis',
             'process.env': '{}',
             'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+
             // Define APP and other globals
             'APP': 'window.APP',
             'JitsiMeetJS': 'window.JitsiMeetJS',
             'config': 'window.config',
-            'interfaceConfig': 'window.interfaceConfig',
+            'interfaceConfig': 'window.interfaceConfig'
         },
 
         resolve: {
             alias: {
-                'focus-visible': 'focus-visible/dist/focus-visible.min.js',
+                'focus-visible': 'focus-visible/dist/focus-visible.min.js'
             },
             extensions: [
                 '.web.js',
-                '.web.ts', 
+                '.web.ts',
                 '.web.tsx',
                 '.tsx',
                 '.ts',
@@ -368,7 +413,7 @@ export default defineConfig(({ mode }) => {
                     'index.html',
                     'static/404.html',
                     'static/close.html',
-                    'static/close2.html', 
+                    'static/close2.html',
                     'static/close3.html',
                     'static/dialInInfo.html',
                     'static/msredirect.html',
@@ -378,8 +423,8 @@ export default defineConfig(({ mode }) => {
                     'static/prejoin.html',
                     'static/recommendedBrowsers.html',
                     'static/whiteboard.html'
-                ],
-            },
-        },
+                ]
+            }
+        }
     };
 });
