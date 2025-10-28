@@ -772,8 +772,8 @@ export function isStageFilmstripEnabled(state: IReduxState) {
 export function isFilmstripDisabled(state: IReduxState) {
     const { filmstrip } = state['features/base/config'];
 
-    if(isMobileBrowser()){
-        return true
+    if (isMobileBrowser()) {
+        return true;
     }
 
     return Boolean(filmstrip?.disabled);
