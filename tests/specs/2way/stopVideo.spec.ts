@@ -7,8 +7,6 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 describe('PreJoin Screen', () => {
 
     it('should disable the join button for a GUEST when a display name is required but not entered', async function() {
-        this.timeout(180000);
-
         await joinFirstParticipant({
             configOverwrite: {
                 prejoinConfig: { enabled: true },
@@ -36,8 +34,6 @@ describe('PreJoin Screen', () => {
     });
 
     it('should allow joining without audio', async function() {
-        this.timeout(180000);
-
         await joinFirstParticipant({
             configOverwrite: {
                 prejoinConfig: { enabled: true },
@@ -67,8 +63,6 @@ describe('PreJoin Screen', () => {
     });
 
     it('should correctly show the pre-join screen for a user joining a locked room', async function() {
-        this.timeout(240000);
-
         // Step 1: p1 joins and enables the lobby
         await ensureOneParticipant({
             configOverwrite: {
