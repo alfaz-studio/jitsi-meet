@@ -82,6 +82,9 @@ jobs:
           # Copy template to actual env file
           cp tests/.env.test tests/.env
 
+          # Get workspace directory
+          WORKSPACE_DIR="${GITHUB_WORKSPACE:-$(pwd)}"
+
           # Normalize URL (remove any trailing slash)
           NORMALIZED_URL="${PREVIEW_URL%/}"
 
@@ -92,7 +95,47 @@ jobs:
             echo "BASE_URL=${NORMALIZED_URL}/meet/" >> tests/.env
           fi
 
+          # Handle VIDEO_CAPTURE_FILE - replace GitHub Actions syntax and convert to absolute path
+          # Chrome requires absolute paths for --use-file-for-fake-video-capture
+          if grep -q '^VIDEO_CAPTURE_FILE=' tests/.env; then
+            # Extract the path value
+            VIDEO_PATH=$(grep '^VIDEO_CAPTURE_FILE=' tests/.env | cut -d'=' -f2- | xargs)
+            
+            # Replace GitHub Actions syntax ${{ github.workspace }} with actual workspace path
+            # Use perl for reliable replacement (available on most systems)
+            if command -v perl >/dev/null 2>&1; then
+              VIDEO_PATH=$(echo "$VIDEO_PATH" | perl -pe "s|\\\$\\{\\{ github\\.workspace \\}\\}|${WORKSPACE_DIR}|g" | perl -pe "s|\\\$\\{\\{github\\.workspace\\}\\}|${WORKSPACE_DIR}|g")
+            else
+              # Fallback: manual string replacement if perl not available
+              VIDEO_PATH=$(echo "$VIDEO_PATH" | sed 's|\${{ github.workspace }}|'"${WORKSPACE_DIR}"'|g' | sed 's|\${{github.workspace}}|'"${WORKSPACE_DIR}"'|g')
+            fi
+            
+            # Determine if path is absolute or relative
+            if [[ "$VIDEO_PATH" == /* ]]; then
+              # Already absolute, keep as is (may still need normalization)
+              ABS_VIDEO_PATH="$VIDEO_PATH"
+            else
+              # Convert relative path to absolute
+              ABS_VIDEO_PATH="${WORKSPACE_DIR}/${VIDEO_PATH}"
+            fi
+            
+            # Normalize the path (remove any ./ or resolve ..)
+            # Use realpath if available, otherwise construct manually
+            if command -v realpath >/dev/null 2>&1; then
+              ABS_VIDEO_PATH=$(realpath -m "$ABS_VIDEO_PATH" 2>/dev/null || echo "$ABS_VIDEO_PATH")
+            fi
+            
+            sed -i "s|^VIDEO_CAPTURE_FILE=.*$|VIDEO_CAPTURE_FILE=${ABS_VIDEO_PATH}|g" tests/.env
+            echo "Converted VIDEO_CAPTURE_FILE to absolute path: ${ABS_VIDEO_PATH}"
+          fi
+
           echo "Created tests/.env with BASE_URL: ${NORMALIZED_URL}/meet/"
+          
+          # Print final .env file for debugging
+          echo ""
+          echo "=== Final generated tests/.env file ==="
+          cat tests/.env
+          echo "======================================="
 
       - name: Run tests
         if: steps.extract-url.outputs.url_valid == 'true'
