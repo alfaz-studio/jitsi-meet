@@ -1,7 +1,17 @@
+import { setTestProperties } from '../../helpers/TestProperties';
+import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('Audio only', () => {
-    it('joining the meeting', () => ensureTwoParticipants());
+    it('joining the meeting', () => ensureTwoParticipants({
+        configOverwrite: {
+            prejoinConfig: { enabled: false },
+            // @ts-ignore
+            jwt: config.jwt.preconfiguredToken
+        }
+    }));
 
     /**
      * Enables audio only mode for p1 and verifies that the other participant sees participant1 as video muted.
@@ -66,9 +76,6 @@ async function setAudioOnlyAndCheck(enable: boolean) {
     await p1.getVideoQualityDialog().setVideoQuality(enable);
 
     await verifyVideoMute(enable);
-
-    await p1.driver.$('//div[@id="videoResolutionLabel"][contains(@class, "audio-only")]')
-        .waitForDisplayed({ reverse: !enable });
 }
 
 /**

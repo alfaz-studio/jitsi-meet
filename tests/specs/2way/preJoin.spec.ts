@@ -1,32 +1,35 @@
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant, joinFirstParticipant, joinSecondParticipant } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('PreJoin', () => {
-    it('display name required', async () => {
+    it('should disable the join button for a GUEST when a display name is required but not entered', async function() {
         await joinFirstParticipant({
             configOverwrite: {
-                prejoinConfig: {
-                    enabled: true,
-                },
+                prejoinConfig: { enabled: true },
                 requireDisplayName: true
             },
             skipDisplayName: true,
-            skipWaitToJoin: true
+            skipWaitToJoin: true,
+            skipInMeetingChecks: true,
+            skipFirstModerator: true
         });
 
-        const p1PreJoinScreen = ctx.p1.getPreJoinScreen();
+        const p1 = ctx.p1;
+        const p1PreJoinScreen = p1.getPreJoinScreen();
 
         await p1PreJoinScreen.waitForLoading();
 
         const joinButton = p1PreJoinScreen.getJoinButton();
 
         await joinButton.waitForDisplayed();
-        await joinButton.click();
 
-        const error = p1PreJoinScreen.getErrorOnJoin();
+        const isDisabledByAria = await joinButton.getAttribute('aria-disabled');
 
-        await error.waitForDisplayed();
+        expect(isDisabledByAria).toBe('true');
 
-        await ctx.p1.hangup();
+        await p1.hangup();
     });
 
     it('without lobby', async () => {
