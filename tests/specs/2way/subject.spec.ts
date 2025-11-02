@@ -1,6 +1,5 @@
 import type { Participant } from '../../helpers/Participant';
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
 
@@ -14,8 +13,7 @@ describe('Subject', () => {
         configOverwrite: {
             subject: MY_TEST_SUBJECT
         },
-        // @ts-ignore
-        jwt: config.jwt.preconfiguredToken
+        useActiveToken: true
     }));
 
     it('check', async () => {

@@ -10,7 +10,9 @@ describe('PreJoin Screen', () => {
         await joinFirstParticipant({
             configOverwrite: {
                 prejoinConfig: { enabled: true },
-                requireDisplayName: true
+                requireDisplayName: true,
+                // @ts-ignore
+                jwt: testsConfig.jwt.preconfiguredToken
             },
             skipDisplayName: true,
             skipWaitToJoin: true,

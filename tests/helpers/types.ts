@@ -48,6 +48,17 @@ export type IParticipantOptions = {
  */
 export type IParticipantJoinOptions = {
 
+
+    /**
+     * If true, the participant will join using the ACTIVE user credentials.
+     */
+    useActiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the TRIALING user credentials.
+     */
+    useTrialingToken?: boolean;
+
     /**
      * Config overwrites to use.
      */
@@ -74,6 +85,16 @@ export type IParticipantJoinOptions = {
 };
 
 export type IJoinOptions = {
+
+    /**
+     * If true, the participant will join using the ACTIVE user credentials.
+     */
+    useActiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the TRIALING user credentials.
+     */
+    useTrialingToken?: boolean;
 
     /**
      * Config overwrites to pass to IParticipantJoinOptions.

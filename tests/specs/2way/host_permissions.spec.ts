@@ -4,7 +4,6 @@ Checks if the host related permissions are properly granted.
 */
 
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant, ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -12,10 +11,7 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 describe('Host Permissions', () => {
     it('p1 joins as host', async () => {
         await ensureOneParticipant({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken,
-            },
+            useActiveToken: true
         });
 
         expect(await ctx.p1.isModerator()).toBe(true);
@@ -37,10 +33,7 @@ describe('Host Permissions', () => {
 
     it('p2 joins as guest', async () => {
         await ensureTwoParticipants({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken,
-            },
+            useActiveToken: true
         });
         const participants_pane = ctx.p2.getParticipantsPane();
 

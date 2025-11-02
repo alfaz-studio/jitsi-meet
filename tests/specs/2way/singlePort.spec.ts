@@ -1,16 +1,12 @@
 import type { Participant } from '../../helpers/Participant';
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Single port', () => {
     it('joining the meeting', () => ensureTwoParticipants({
-        configOverwrite: {
-            // @ts-ignore
-            jwt: config.jwt.preconfiguredToken
-        }
+        useActiveToken: true
     }));
 
     it('test', async () => {

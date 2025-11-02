@@ -1,5 +1,4 @@
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -7,10 +6,7 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 describe('Kick', () => {
     it('joining the meeting', async () => {
         await ensureTwoParticipants({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken,
-            }
+            useActiveToken: true
         });
 
         if (!await ctx.p1.isModerator()) {
@@ -25,11 +21,10 @@ describe('Kick', () => {
             configOverwrite: {
                 p2p: {
                     enabled: true
-                },
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken
+                }
             },
-            skipWaitToJoin: true
+            skipWaitToJoin: true,
+            useActiveToken: true
         });
 
         await kickParticipant2AndCheck();

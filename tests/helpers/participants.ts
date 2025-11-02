@@ -16,20 +16,10 @@ export async function ensureOneParticipant(options?: IJoinOptions): Promise<void
     const participantOps = { name: P1 } as IParticipantOptions;
 
     if (!options?.skipFirstModerator) {
-        const jwtPrivateKeyPath = config.jwt.privateKeyPath;
-
-        // we prioritize the access token when iframe is not used and private key is set,
-        // otherwise if private key is not specified we use the access token if set
-        if (config.jwt.preconfiguredToken
-            && ((jwtPrivateKeyPath && !ctx.testProperties.useIFrameApi && !options?.preferGenerateToken)
-                || !jwtPrivateKeyPath)) {
+        if (options?.useTrialingToken && config.jwt.preconfiguredTrialingToken) {
+            participantOps.token = { jwt: config.jwt.preconfiguredTrialingToken };
+        } else if (config.jwt.preconfiguredToken) {
             participantOps.token = { jwt: config.jwt.preconfiguredToken };
-        } else if (jwtPrivateKeyPath) {
-            participantOps.token = generateToken({
-                ...options?.tokenOptions,
-                displayName: participantOps.name,
-                moderator: true
-            });
         }
     }
 
@@ -142,17 +132,18 @@ export async function ensureTwoParticipants(options?: IJoinOptions): Promise<voi
 
     const participantOptions = { name: P2 } as IParticipantOptions;
 
-    if (options?.preferGenerateToken) {
+    if (options?.useTrialingToken && config.jwt.preconfiguredTrialingToken) {
+        participantOptions.token = { jwt: config.jwt.preconfiguredTrialingToken };
+    } else if (options?.useActiveToken && config.jwt.preconfiguredToken) {
+        participantOptions.token = { jwt: config.jwt.preconfiguredToken };
+    } else if (options?.preferGenerateToken) {
         participantOptions.token = generateToken({
             ...options?.tokenOptions,
             displayName: participantOptions.name,
         });
     }
 
-    await joinParticipant({
-        ...participantOptions,
-        name: P2
-    }, options);
+    await joinParticipant(participantOptions, options);
 
     if (options?.skipInMeetingChecks) {
         return Promise.resolve();

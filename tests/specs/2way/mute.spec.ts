@@ -1,6 +1,5 @@
 import type { Participant } from '../../helpers/Participant';
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config as testsConfig } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants, muteAudioAndCheck, unmuteAudioAndCheck } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -12,11 +11,10 @@ describe('Mute', () => {
 
         await ensureTwoParticipants({
             configOverwrite: {
-                prejoinConfig: { enabled: false },
-                // @ts-ignore
-                jwt: testsConfig.jwt.preconfiguredToken
+                prejoinConfig: { enabled: false }
             },
-            skipInMeetingChecks: true
+            skipInMeetingChecks: true,
+            useActiveToken: true
         });
 
         const { p1, p2 } = ctx;

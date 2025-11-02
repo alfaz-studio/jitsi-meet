@@ -1,7 +1,6 @@
 import process from 'node:process';
 
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant } from '../../helpers/participants';
 import { cleanup, dialIn, isDialInEnabled, waitForAudioFromDialInParticipant } from '../helpers/DialIn';
 
@@ -18,10 +17,7 @@ describe('Dial-In', () => {
 
         await ensureOneParticipant({
             preferGenerateToken: true,
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken
-            }
+            useActiveToken: true
         });
 
         // check dial-in is enabled

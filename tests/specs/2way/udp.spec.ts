@@ -1,6 +1,5 @@
 import type { Participant } from '../../helpers/Participant';
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -10,10 +9,9 @@ describe('UDP', () => {
         configOverwrite: {
             prejoinConfig: {
                 enabled: false
-            },
-            // @ts-ignore
-            jwt: config.jwt.preconfiguredToken
-        }
+            }
+        },
+        useActiveToken: true
     }));
 
     it('check', async () => {

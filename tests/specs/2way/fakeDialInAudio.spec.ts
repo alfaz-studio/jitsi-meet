@@ -1,7 +1,6 @@
 import process from 'node:process';
 
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant, ensureTwoParticipants } from '../../helpers/participants';
 import { cleanup, isDialInEnabled, waitForAudioFromDialInParticipant } from '../helpers/DialIn';
 
@@ -19,11 +18,8 @@ describe('Fake Dial-In', () => {
         }
 
         await ensureOneParticipant({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken,
-            },
-            skipWaitToJoin: true
+            skipWaitToJoin: true,
+            useActiveToken: true
         });
 
         // check dial-in is enabled, so skip
@@ -45,10 +41,7 @@ describe('Fake Dial-In', () => {
         }
 
         await ensureTwoParticipants({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken
-            }
+            useActiveToken: true
         });
     });
 

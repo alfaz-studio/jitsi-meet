@@ -1,5 +1,4 @@
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -8,9 +7,8 @@ describe('Audio only', () => {
     it('joining the meeting', () => ensureTwoParticipants({
         configOverwrite: {
             prejoinConfig: { enabled: false },
-            // @ts-ignore
-            jwt: config.jwt.preconfiguredToken
-        }
+        },
+        useActiveToken: true
     }));
 
     /**

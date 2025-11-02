@@ -1,5 +1,4 @@
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant, ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -7,11 +6,8 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 describe('Grant moderator', () => {
     it('joining the meeting', async () => {
         await ensureOneParticipant({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken,
-            },
-            skipWaitToJoin: true
+            skipWaitToJoin: true,
+            useActiveToken: true
         });
 
         if (await ctx.p1.execute(() => typeof APP.conference._room.grantOwner !== 'function')) {
@@ -21,10 +17,7 @@ describe('Grant moderator', () => {
         }
 
         await ensureTwoParticipants({
-            configOverwrite: {
-                // @ts-ignore
-                jwt: config.jwt.preconfiguredToken,
-            },
+            useActiveToken: true
         });
     });
 

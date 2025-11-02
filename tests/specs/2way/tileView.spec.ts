@@ -1,5 +1,4 @@
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config as testsConfig } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
@@ -10,11 +9,7 @@ describe('TileView', () => {
 
         // 1. Join the conference with our full, correct configuration
         await ensureTwoParticipants({
-            configOverwrite: {
-                prejoinConfig: { enabled: false },
-                // @ts-ignore
-                jwt: testsConfig.jwt.preconfiguredToken
-            }
+            useActiveToken: true
         });
     });
 

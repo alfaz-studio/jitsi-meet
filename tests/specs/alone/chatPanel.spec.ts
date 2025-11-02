@@ -1,15 +1,11 @@
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config } from '../../helpers/TestsConfig';
 import { ensureOneParticipant } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
 
 describe('Chat Panel', () => {
     it('join participant', () => ensureOneParticipant({
-        configOverwrite: {
-            // @ts-ignore
-            jwt: config.jwt.preconfiguredToken
-        }
+        useActiveToken: true
     }));
 
     it('start closed', async () => {
