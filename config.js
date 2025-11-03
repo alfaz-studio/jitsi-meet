@@ -136,10 +136,10 @@ var config = {
     disableModeratorIndicator: false,
 
     // Disables the reactions feature.
-    disableReactions: true,
+    disableReactions: false,
 
     // Disables the reactions moderation feature.
-    disableReactionsModeration: true,
+    disableReactionsModeration: false,
 
     // Disables the reactions in chat feature.
     disableReactionsInChat: true,

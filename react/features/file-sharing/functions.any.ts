@@ -6,8 +6,8 @@ import {
     IconVideo,
     IconVolumeUp
 } from '../base/icons/svg';
-import { MEET_FEATURES } from '../base/jwt/constants';
-import { isJwtFeatureEnabled } from '../base/jwt/functions';
+// import { MEET_FEATURES } from '../base/jwt/constants';
+// import { isJwtFeatureEnabled } from '../base/jwt/functions';
 import { showErrorNotification } from '../notifications/actions';
 import { NOTIFICATION_TIMEOUT_TYPE, NOTIFICATION_TYPE } from '../notifications/constants';
 import { iAmVisitor } from '../visitors/functions';
@@ -147,11 +147,15 @@ export const processFiles = (fileList: FileList | File[], store: IStore) => {
 /**
  * Determines if file uploading is enabled based on JWT feature flags and file sharing settings.
  *
+ * Sonacove: Permanently remove the JWT feature flag ("file-upload") requirement
+ * to simplify setup. Uploads are allowed when not a visitor and fileSharing is enabled
+ * with a valid apiUrl in config.js.
+ *
  * @param {IReduxState} state - Current state.
  * @returns {boolean} Indication of whether local user can upload files.
  */
 export function isFileUploadingEnabled(state: IReduxState): boolean {
     return !iAmVisitor(state)
-        && isJwtFeatureEnabled(state, MEET_FEATURES.FILE_UPLOAD, false)
+        // && isJwtFeatureEnabled(state, MEET_FEATURES.FILE_UPLOAD, false)
         && isFileSharingEnabled(state);
 }
