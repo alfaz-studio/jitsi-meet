@@ -880,7 +880,6 @@ var config = {
     // - 'desktop' controls the "Share your screen" button
     // - if `toolbarButtons` is undefined, we fallback to enabling all buttons on the UI
     toolbarButtons: [
-        'annotate',
         'camera',
         'chat',
 
