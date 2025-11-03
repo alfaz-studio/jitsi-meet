@@ -3,6 +3,7 @@ import { batch, useDispatch, useSelector } from 'react-redux';
 
 import { ACTION_SHORTCUT_TRIGGERED, createShortcutEvent } from '../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../analytics/functions';
+import AnnotateButton from '../annotations/components/AnnotateButton';
 import { IReduxState } from '../app/types';
 import { toggleDialog } from '../base/dialog/actions';
 import { isIosMobileBrowser, isIpadMobileBrowser } from '../base/environment/utils';
@@ -141,6 +142,12 @@ const fullscreen = {
 const pip = {
     key: 'pip',
     Content: WebPictureInPictureButton,
+    group: 2
+};
+
+const annotate = {
+    key: 'annotate',
+    Content: AnnotateButton,
     group: 2
 };
 
@@ -316,6 +323,7 @@ export function useToolboxButtons(
         raisehand,
         reactions,
         pip,
+        annotate,
         'participants-pane': participants,
         invite,
         tileview,

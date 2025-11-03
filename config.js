@@ -288,7 +288,7 @@ var config = {
     cameraFacingMode: 'user',
 
     // Sets the preferred resolution (height) for local video. Defaults to 720.
-    resolution: 720,
+    resolution: 540,
 
     // DEPRECATED. Please use raisedHands.disableRemoveRaisedHandOnFocus instead.
     // Specifies whether the raised hand will hide when someone becomes a dominant speaker or not
@@ -338,7 +338,7 @@ var config = {
 
     // How many participants while in the tile view mode, before the receiving video quality is reduced from HD to SD.
     // Use -1 to disable.
-    maxFullResolutionParticipants: 8,
+    maxFullResolutionParticipants: 4,
 
     // w3c spec-compliant video constraints to use for video capture. Currently
     // used by browsers that return true from lib-jitsi-meet's
@@ -348,12 +348,12 @@ var config = {
     constraints: {
         video: {
             height: {
-                ideal: 720,
+                ideal: 540,
                 max: 1080,
                 min: 240,
             },
             width: {
-                ideal: 1280,
+                ideal: 960,
                 max: 1920,
                 min: 426,
             },
@@ -367,7 +367,7 @@ var config = {
     disableSimulcast: false,
 
     // Every participant after the Nth will start video muted.
-    // startVideoMuted: 2,
+    startVideoMuted: 2,
 
     // Start calls with video muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
@@ -471,18 +471,22 @@ var config = {
     },
 
     // Customize the Live Streaming dialog. Can be modified for a non-YouTube provider.
-    // liveStreaming: {
-    //    // Whether to enable live streaming or not.
-    //    enabled: false,
-    //    // Terms link
-    //    termsLink: 'https://www.youtube.com/t/terms',
-    //    // Data privacy link
-    //    dataPrivacyLink: 'https://policies.google.com/privacy',
-    //    // RegExp string that validates the stream key input field
-    //    validatorRegExpString: '^(?:[a-zA-Z0-9]{4}(?:-(?!$)|$)){4}',
-    //    // Documentation reference for the live streaming feature.
-    //    helpLink: 'https://jitsi.org/live'
-    // },
+    liveStreaming: {
+        // Whether to enable live streaming or not.
+        enabled: true,
+
+        // Terms link
+        termsLink: 'https://www.youtube.com/t/terms',
+
+        // Data privacy link
+        dataPrivacyLink: 'https://policies.google.com/privacy',
+
+        // RegExp string that validates the stream key input field
+        validatorRegExpString: '^(?:[a-zA-Z0-9]{4}(?:-(?!$)|$)){4}',
+
+        // Documentation reference for the live streaming feature.
+        helpLink: 'https://support.google.com/youtube/answer/2474026'
+    },
 
     // DEPRECATED. Use liveStreaming.enabled instead.
     // liveStreamingEnabled: false,
@@ -545,7 +549,7 @@ var config = {
     // Misc
 
     // Default value for the channel "last N" attribute. -1 for unlimited.
-    channelLastN: 10,
+    channelLastN: 4,
 
     // Connection indicators
     connectionIndicators: {
@@ -564,10 +568,10 @@ var config = {
     // Specify the settings for video quality optimizations on the client.
     videoQuality: {
         // Provides a way to set the codec preference on desktop based endpoints.
-        codecPreferenceOrder: [ 'AV1', 'VP9', 'VP8', 'H264' ],
+        codecPreferenceOrder: [ 'VP8', 'H264', 'VP9', 'AV1' ],
 
         // Provides a way to set the codec for screenshare.
-        screenshareCodec: 'AV1',
+        screenshareCodec: 'VP8',
         mobileScreenshareCodec: 'VP8',
 
         // Enables the adaptive mode in the client that will make runtime adjustments to selected codecs and received
@@ -876,6 +880,7 @@ var config = {
     // - 'desktop' controls the "Share your screen" button
     // - if `toolbarButtons` is undefined, we fallback to enabling all buttons on the UI
     toolbarButtons: [
+        'annotate',
         'camera',
         'chat',
 
@@ -898,7 +903,7 @@ var config = {
         'invite',
 
         //    'linktosalesforce',
-        //    'livestreaming',
+        'livestreaming',
         'microphone',
         'noisesuppression',
         'participants-pane',
@@ -1137,7 +1142,7 @@ var config = {
         mobileCodecPreferenceOrder: [ 'VP8', 'H264', 'VP9', 'AV1' ],
 
         // Provides a way to set the codec preference on desktop based endpoints.
-        codecPreferenceOrder: [ 'AV1', 'VP9', 'VP8', 'H264' ],
+        codecPreferenceOrder: [ 'VP8', 'H264', 'VP9', 'AV1' ],
 
         // Provides a way to set the codec for screenshare.
         // screenshareCodec: 'AV1',
