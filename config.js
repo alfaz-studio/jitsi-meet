@@ -917,7 +917,7 @@ var config = {
         'toggle-camera',
         'videoquality',
 
-        //    'whiteboard',
+        'whiteboard',
     ],
 
     // Holds values related to toolbar visibility control.
@@ -1932,21 +1932,21 @@ var config = {
     defaultLogoUrl: 'images/watermark.svg',
 
     // Settings for the Excalidraw whiteboard integration.
-    // whiteboard: {
-    //     // Whether the feature is enabled or not.
-    //     enabled: true,
+    whiteboard: {
+        // Whether the feature is enabled or not.
+        enabled: true,
 
-    //     // The server used to support whiteboard collaboration.
-    //     // https://github.com/jitsi/excalidraw-backend
-    //     collabServerBaseUrl: 'https://excalidraw-backend.example.com',
+        // The server used to support whiteboard collaboration.
+        // https://github.com/jitsi/excalidraw-backend
+        collabServerBaseUrl: `https://${meetdomain}/whiteboard`,
 
-    //     // The user access limit to the whiteboard, introduced as a means
-    //     // to control the performance.
-    //     userLimit: 25,
+        // The user access limit to the whiteboard, introduced as a means
+        // to control the performance.
+        userLimit: 25,
 
-    //     // The url for more info about the whiteboard and its usage limitations.
-    //     limitUrl: 'https://example.com/blog/whiteboard-limits',
-    // },
+        // The url for more info about the whiteboard and its usage limitations.
+        limitUrl: 'https://sonacove.com',
+    },
 
     // The watchRTC initialize config params as described :
     // https://testrtc.com/docs/installing-the-watchrtc-javascript-sdk/#h-set-up-the-sdk
