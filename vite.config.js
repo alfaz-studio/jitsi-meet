@@ -58,7 +58,7 @@ const STATIC_FILES = [
 const LIB_FILES = [
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets',
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets-dev',
-    'node_modules/lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
+    'lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
     'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 

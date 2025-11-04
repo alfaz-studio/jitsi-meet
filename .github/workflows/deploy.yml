@@ -6,6 +6,10 @@ on:
     pull_request:
         branches: [sonacove]
 
+permissions:
+    contents: read
+    pull-requests: write
+
 jobs:
     deploy:
         name: Cloudflare
@@ -14,13 +18,23 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
               with:
-                  submodules: true # Required for lib-jitsi-meet submodule
+                  submodules: recursive # Required for lib-jitsi-meet submodule and any nested submodules
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
                   node-version-file: ".nvmrc"
                   cache: "npm"
+
+            - name: Build lib-jitsi-meet
+              run: |
+                  cd lib-jitsi-meet
+                  echo "📦 Installing dependencies for lib-jitsi-meet..."
+                  npm ci
+                  echo "🛠️ Building lib-jitsi-meet..."
+                  npm run build
+                  echo "✅ lib-jitsi-meet build complete"
+                  cd ..
 
             - name: Install dependencies
               run: npm ci
