@@ -7,7 +7,10 @@ describe('DisplayName', () => {
     it('should correctly handle display name changes and persistence', async function() {
         await ensureTwoParticipants({
             skipInMeetingChecks: true,
-            useActiveToken: true
+            useActiveToken: true,
+            tokenOptions: {
+                moderator: true
+            }
         });
 
         let { p1, p2 } = ctx;

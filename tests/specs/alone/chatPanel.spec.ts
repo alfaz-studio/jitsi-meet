@@ -1,12 +1,7 @@
-import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant } from '../../helpers/participants';
 
-setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
-
 describe('Chat Panel', () => {
-    it('join participant', () => ensureOneParticipant({
-        useActiveToken: true
-    }));
+    it('join participant', () => ensureOneParticipant({ useInactiveToken: true }));
 
     it('start closed', async () => {
         expect(await ctx.p1.getChatPanel().isOpen()).toBe(false);

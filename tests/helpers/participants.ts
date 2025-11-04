@@ -1,5 +1,6 @@
 import { P1, P2, P3, P4, Participant } from './Participant';
 import { config } from './TestsConfig';
+import { loginUser } from './sona_auth';
 import { generateToken } from './token';
 import { IJoinOptions, IParticipantOptions } from './types';
 
@@ -16,10 +17,20 @@ export async function ensureOneParticipant(options?: IJoinOptions): Promise<void
     const participantOps = { name: P1 } as IParticipantOptions;
 
     if (!options?.skipFirstModerator) {
-        if (options?.useTrialingToken && config.jwt.preconfiguredTrialingToken) {
-            participantOps.token = { jwt: config.jwt.preconfiguredTrialingToken };
-        } else if (config.jwt.preconfiguredToken) {
+        const jwtPrivateKeyPath = config.jwt.privateKeyPath;
+
+        // we prioritize the access token when iframe is not used and private key is set,
+        // otherwise if private key is not specified we use the access token if set
+        if (config.jwt.preconfiguredToken
+            && ((jwtPrivateKeyPath && !ctx.testProperties.useIFrameApi && !options?.preferGenerateToken)
+                || !jwtPrivateKeyPath)) {
             participantOps.token = { jwt: config.jwt.preconfiguredToken };
+        } else if (jwtPrivateKeyPath) {
+            participantOps.token = generateToken({
+                ...options?.tokenOptions,
+                displayName: participantOps.name,
+                moderator: true
+            });
         }
     }
 
@@ -127,23 +138,18 @@ export async function ensureFourParticipants(options?: IJoinOptions): Promise<vo
  *
  * @param {IJoinOptions} options - The options to join.
  */
-export async function ensureTwoParticipants(options?: IJoinOptions): Promise<void> {
+export async function ensureTwoParticipants(options: IJoinOptions = {}): Promise<void> {
     await ensureOneParticipant(options);
 
     const participantOptions = { name: P2 } as IParticipantOptions;
 
-    if (options?.useTrialingToken && config.jwt.preconfiguredTrialingToken) {
-        participantOptions.token = { jwt: config.jwt.preconfiguredTrialingToken };
-    } else if (options?.useActiveToken && config.jwt.preconfiguredToken) {
-        participantOptions.token = { jwt: config.jwt.preconfiguredToken };
-    } else if (options?.preferGenerateToken) {
-        participantOptions.token = generateToken({
-            ...options?.tokenOptions,
-            displayName: participantOptions.name,
-        });
-    }
+    const p2Options = { ...options };
 
-    await joinParticipant(participantOptions, options);
+    delete p2Options.useActiveToken;
+    delete p2Options.useTrialingToken;
+    delete p2Options.useInactiveToken;
+
+    await joinParticipant(participantOptions, p2Options);
 
     if (options?.skipInMeetingChecks) {
         return Promise.resolve();
@@ -209,6 +215,10 @@ async function joinParticipant( // eslint-disable-line max-params
 
     if (!tenant && ctx.testProperties.useIFrameApi) {
         tenant = config.iframe.tenant;
+    }
+
+    if (options?.useActiveToken || options?.useTrialingToken || options?.useInactiveToken) {
+        await loginUser(participantOptions.name, options);
     }
 
     return await newParticipant.joinConference({

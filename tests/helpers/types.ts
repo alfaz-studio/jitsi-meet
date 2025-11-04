@@ -48,17 +48,6 @@ export type IParticipantOptions = {
  */
 export type IParticipantJoinOptions = {
 
-
-    /**
-     * If true, the participant will join using the ACTIVE user credentials.
-     */
-    useActiveToken?: boolean;
-
-    /**
-     * If true, the participant will join using the TRIALING user credentials.
-     */
-    useTrialingToken?: boolean;
-
     /**
      * Config overwrites to use.
      */
@@ -82,9 +71,6 @@ export type IParticipantJoinOptions = {
      * An optional tenant to use. If provided it overrides the default.
      */
     tenant?: string;
-};
-
-export type IJoinOptions = {
 
     /**
      * If true, the participant will join using the ACTIVE user credentials.
@@ -92,9 +78,17 @@ export type IJoinOptions = {
     useActiveToken?: boolean;
 
     /**
+     * If true, the participant will join using the INACTIVE user credentials.
+     */
+    useInactiveToken?: boolean;
+
+    /**
      * If true, the participant will join using the TRIALING user credentials.
      */
     useTrialingToken?: boolean;
+};
+
+export type IJoinOptions = {
 
     /**
      * Config overwrites to pass to IParticipantJoinOptions.
@@ -141,4 +135,19 @@ export type IJoinOptions = {
      * Options used when generating a token.
      */
     tokenOptions?: ITokenOptions;
+
+    /**
+     * If true, the participant will join using the ACTIVE user credentials.
+     */
+    useActiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the INACTIVE user credentials.
+     */
+    useInactiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the TRIALING user credentials.
+     */
+    useTrialingToken?: boolean;
 };

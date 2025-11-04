@@ -27,7 +27,6 @@ import Toolbar from '../pageobjects/Toolbar';
 import VideoQualityDialog from '../pageobjects/VideoQualityDialog';
 import Visitors from '../pageobjects/Visitors';
 
-import { config as testsConfig } from './TestsConfig';
 import { LOG_PREFIX, logInfo } from './browserLogger';
 import { IToken } from './token';
 import { IParticipantJoinOptions, IParticipantOptions } from './types';
@@ -226,14 +225,8 @@ export class Participant {
                 url = `${url}&tenant="${baseUrl.pathname.substring(1)}"`;
             }
         }
-        // if (this._token?.jwt) {
-        //     url = `${url}&jwt="${this._token.jwt}"`;
-        // }
-
-        if (options.useActiveToken) {
-            url = `${url}&jwt="${testsConfig.jwt.preconfiguredToken}"`;
-        } else if (options.useTrialingToken) {
-            url = `${url}&jwt="${testsConfig.jwt.preconfiguredTrialingToken}"`;
+        if (this._token?.jwt) {
+            url = `${url}&jwt="${this._token.jwt}"`;
         }
 
         await this.driver.setTimeout({ 'pageLoad': 30000 });
