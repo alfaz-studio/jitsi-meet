@@ -46,6 +46,8 @@ const COMMON_ROOT_FILES = [
 // Static files to copy to build/static folder
 const STATIC_FILES = [
     'static/pwa',
+    'static/themes',
+    'static/analytics.js',
     'static/settingsToolbarAdditionalContent.html',
     'static/welcomePageAdditionalCard.html',
     'static/welcomePageAdditionalContent.html'
@@ -248,6 +250,7 @@ export default defineConfig(({ mode }) => {
                 input: [
                     'index.html',
                     'static/404.html',
+                    'static/callback.html',
                     'static/close.html',
                     'static/close2.html',
                     'static/close3.html',
@@ -258,6 +261,7 @@ export default defineConfig(({ mode }) => {
                     'static/planLimit.html',
                     'static/prejoin.html',
                     'static/recommendedBrowsers.html',
+                    'static/signout-callback.html',
                     'static/whiteboard.html'
                 ]
             }
