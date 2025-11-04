@@ -1,19 +1,9 @@
+/// <reference types="vite/client" />
+
 import { IStore } from "./react/features/app/types";
 import { IConfig } from "./react/features/base/config/configType";
 
 export {};
-
-// Vite worker import types
-declare module '*?worker&url' {
-    const url: string;
-    export default url;
-}
-
-// Also support relative imports with ?worker&url
-declare module './*?worker&url' {
-    const url: string;
-    export default url;
-}
 
 declare global {
     const APP: {
