@@ -2001,7 +2001,7 @@ var config = {
         enabled: true,
 
         // Maximum file size limit (-1 value disables any file size limit check)
-        maxFileSize: 50,
+        maxFileSize: 16_000_000,
     },
 };
 
