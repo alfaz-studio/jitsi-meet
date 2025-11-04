@@ -1,9 +1,10 @@
+<!DOCTYPE html>
 <html itemscope itemtype="http://schema.org/Product" prefix="og: http://ogp.me/ns#" xmlns="http://www.w3.org/1999/html">
   <head>
     <!--#include virtual="head.html" -->
     <meta charset="utf-8">
     <meta http-equiv="content-type" content="text/html;charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <meta name="theme-color" content="#2A3A4B">
     <!--#include virtual="base.html" -->
 
@@ -11,6 +12,9 @@
     <link rel="stylesheet" href="./css/main.scss" />
     <!--#include virtual="fonts.html"-->
     <link rel="manifest" id="manifest-placeholder">
+
+    <!-- AuthService for authentication -->
+    <script src="static/auth-service.js"></script>
 
     <script>
         function contextRoot(pathname) {
@@ -64,7 +68,7 @@
         // redirected to a page that is known to have no newer js syntax.
         if (window.navigator.userAgent.match(/(MSIE|Trident)/)) {
             var roomName = encodeURIComponent(window.location.pathname);
-            window.location.pathname = 'static/recommendedBrowsers.html';
+            window.location.pathname = '/static/recommendedBrowsers.html';
         }
 
         window.indexLoadedTime = window.performance.now();
@@ -83,6 +87,8 @@
             "do_external_connect.js",
             "interface_config.js",
             "lib-jitsi-meet.min.js",
+            "react.min.js",
+            "vendor.min.js",
             "app.bundle.min.js",
             "all.css"
         ];

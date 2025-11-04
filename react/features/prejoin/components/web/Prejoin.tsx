@@ -6,7 +6,6 @@ import { makeStyles } from 'tss-react/mui';
 
 import { IReduxState } from '../../../app/types';
 import Avatar from '../../../base/avatar/components/Avatar';
-import { isNameReadOnly } from '../../../base/config/functions.web';
 import { IconArrowDown, IconArrowUp, IconPhoneRinging, IconVolumeOff } from '../../../base/icons/svg';
 import { isVideoMutedByUser } from '../../../base/media/functions';
 import { getLocalParticipant } from '../../../base/participants/functions';
@@ -19,7 +18,7 @@ import { getLocalJitsiVideoTrack } from '../../../base/tracks/functions.web';
 import Button from '../../../base/ui/components/web/Button';
 import Input from '../../../base/ui/components/web/Input';
 import { BUTTON_TYPES } from '../../../base/ui/constants.any';
-import isInsecureRoomName from '../../../base/util/isInsecureRoomName';
+import useInsecureRoomName from '../../../base/util/useInsecureRoomName';
 import { openDisplayNamePrompt } from '../../../display-name/actions';
 import { isUnsafeRoomWarningEnabled } from '../../../prejoin/functions';
 import {
@@ -32,6 +31,7 @@ import {
     isDisplayNameRequired,
     isJoinByPhoneButtonVisible,
     isJoinByPhoneDialogVisible,
+    isNameReadOnly,
     isPrejoinDisplayNameVisible
 } from '../../functions';
 import logger from '../../logger';
@@ -92,6 +92,11 @@ interface IProps {
     readOnlyName: boolean;
 
     /**
+     * The room name to join.
+     */
+    room: string | undefined;
+
+    /**
      * Sets visibility of the 'JoinByPhoneDialog'.
      */
     setJoinByPhoneDialogVisiblity: Function;
@@ -116,15 +121,16 @@ interface IProps {
      */
     showRecordingWarning: boolean;
 
-    /**
-     * If should show unsafe room warning when joining.
-     */
-    showUnsafeRoomWarning: boolean;
 
     /**
      * Whether the user has approved to join a room with unsafe name.
      */
     unsafeRoomConsent?: boolean;
+
+    /**
+     * Whether unsafe room warning is enabled.
+     */
+    unsafeRoomWarningEnabled: boolean;
 
     /**
      * Updates settings.
@@ -220,13 +226,14 @@ const Prejoin = ({
     participantId,
     prejoinConfig,
     readOnlyName,
+    room,
     setJoinByPhoneDialogVisiblity,
     showCameraPreview,
     showDialog,
     showErrorOnJoin,
     showRecordingWarning,
-    showUnsafeRoomWarning,
     unsafeRoomConsent,
+    unsafeRoomWarningEnabled,
     updateSettings: dispatchUpdateSettings,
     videoTrack
 }: IProps) => {
@@ -240,6 +247,9 @@ const Prejoin = ({
     const { classes } = useStyles();
     const { t } = useTranslation();
     const dispatch = useDispatch();
+
+    // Use async hook to check if room name is insecure
+    const showUnsafeRoomWarning = useInsecureRoomName(room || '', unsafeRoomWarningEnabled);
 
     /**
      * Handler for the join button.
@@ -513,12 +523,13 @@ function mapStateToProps(state: IReduxState) {
         participantId,
         prejoinConfig: state['features/base/config'].prejoinConfig,
         readOnlyName: isNameReadOnly(state),
+        room,
         showCameraPreview: !isVideoMutedByUser(state),
         showDialog: isJoinByPhoneDialogVisible(state),
         showErrorOnJoin,
         showRecordingWarning: Boolean(showRecordingWarning),
-        showUnsafeRoomWarning: isInsecureRoomName(room) && isUnsafeRoomWarningEnabled(state),
         unsafeRoomConsent,
+        unsafeRoomWarningEnabled: isUnsafeRoomWarningEnabled(state),
         videoTrack: getLocalJitsiVideoTrack(state)
     };
 }

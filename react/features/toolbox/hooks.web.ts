@@ -3,6 +3,7 @@ import { batch, useDispatch, useSelector } from 'react-redux';
 
 import { ACTION_SHORTCUT_TRIGGERED, createShortcutEvent } from '../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../analytics/functions';
+import AnnotateButton from '../annotations/components/AnnotateButton';
 import { IReduxState } from '../app/types';
 import { toggleDialog } from '../base/dialog/actions';
 import { isIosMobileBrowser, isIpadMobileBrowser } from '../base/environment/utils';
@@ -32,6 +33,7 @@ import {
     isParticipantsPaneEnabled
 } from '../participants-pane/functions';
 import { useParticipantPaneButton } from '../participants-pane/hooks.web';
+import WebPictureInPictureButton from '../picture-in-picture-web/components/WebPictureInPictureButton';
 import { addReactionToBuffer } from '../reactions/actions.any';
 import { toggleReactionsMenuVisibility } from '../reactions/actions.web';
 import RaiseHandContainerButton from '../reactions/components/web/RaiseHandContainerButtons';
@@ -63,6 +65,7 @@ import DownloadButton from './components/DownloadButton';
 import HelpButton from './components/HelpButton';
 import AudioSettingsButton from './components/web/AudioSettingsButton';
 import CustomOptionButton from './components/web/CustomOptionButton';
+import DownloadDataButton from './components/web/DownloadDataButton';
 import FullscreenButton from './components/web/FullscreenButton';
 import LinkToSalesforceButton from './components/web/LinkToSalesforceButton';
 import ProfileButton from './components/web/ProfileButton';
@@ -136,9 +139,27 @@ const fullscreen = {
     group: 2
 };
 
+const pip = {
+    key: 'pip',
+    Content: WebPictureInPictureButton,
+    group: 2
+};
+
+const annotate = {
+    key: 'annotate',
+    Content: AnnotateButton,
+    group: 2
+};
+
 const linkToSalesforce = {
     key: 'linktosalesforce',
     Content: LinkToSalesforceButton,
+    group: 2
+};
+
+const downloadData = {
+    key: 'downloaddata',
+    Content: DownloadDataButton,
     group: 2
 };
 
@@ -293,7 +314,7 @@ export function useToolboxButtons(
     const _download = useDownloadButton();
     const _help = useHelpButton();
 
-    const buttons: { [key in ToolbarButton]?: IToolboxButton; } = {
+    const buttons: { [key in ToolbarButton]?: IToolboxButton } = {
         microphone,
         camera,
         profile,
@@ -301,6 +322,8 @@ export function useToolboxButtons(
         chat,
         raisehand,
         reactions,
+        pip,
+        annotate,
         'participants-pane': participants,
         invite,
         tileview,
@@ -309,6 +332,7 @@ export function useToolboxButtons(
         fullscreen: _fullscreen,
         security,
         closedcaptions: cc,
+        downloaddata: downloadData,
         recording,
         livestreaming: liveStreaming,
         linktosalesforce,

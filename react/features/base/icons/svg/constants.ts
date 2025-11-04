@@ -1,5 +1,6 @@
 import { default as IconRecordAccount } from './account-record.svg';
 import { default as IconAddUser } from './add-user.svg';
+import { default as IconAnnotate } from './annotate.svg';
 import { default as IconArrowBack } from './arrow-back.svg';
 import { default as IconArrowDownLarge } from './arrow-down-large.svg';
 import { default as IconArrowDown } from './arrow-down.svg';
@@ -48,6 +49,7 @@ import { default as IconHangup } from './hangup.svg';
 import { default as IconDeviceHeadphone } from './headset.svg';
 import { default as IconHelp } from './help.svg';
 import { default as IconHighlight } from './highlight.svg';
+import { default as IconHost } from './host.svg';
 import { default as IconRingGroup } from './icon-ring-group.svg';
 import { default as IconImage } from './image.svg';
 import { default as IconInfoCircle } from './info-circle.svg';
@@ -56,6 +58,7 @@ import { default as IconRecordLead } from './lead-record.svg';
 import { default as IconMessage } from './message.svg';
 import { default as IconMeter } from './meter.svg';
 import { default as IconMicSlash } from './mic-slash.svg';
+import { default as IconMicWarning } from './mic-warning.svg';
 import { default as IconMic } from './mic.svg';
 import { default as IconModerator } from './moderator.svg';
 import { default as IconConnectionInactive } from './ninja.svg';
@@ -65,6 +68,7 @@ import { default as IconOffice365 } from './office365.svg';
 import { default as IconRecordOpportunity } from './opportunity-record.svg';
 import { default as IconPerformance } from './performance.svg';
 import { default as IconPhoneRinging } from './phone-ringing.svg';
+import { default as IconPictureInPicture } from './picture-in-picture.svg';
 import { default as IconPin } from './pin.svg';
 import { default as IconPinned } from './pinned.svg';
 import { default as IconPlay } from './play.svg';
@@ -93,6 +97,7 @@ import { default as IconUserDeleted } from './user-deleted.svg';
 import { default as IconUser } from './user.svg';
 import { default as IconUsers } from './users.svg';
 import { default as IconVideoOff } from './video-off.svg';
+import { default as IconVideoWarning } from './video-warning.svg';
 import { default as IconVideo } from './video.svg';
 import { default as IconAudioOnlyOff } from './visibility-off.svg';
 import { default as IconAudioOnly } from './visibility.svg';
@@ -112,6 +117,7 @@ import { default as IconYahoo } from './yahoo.svg';
  */
 export const DEFAULT_ICON: Record<string, any> = {
     IconAddUser,
+    IconAnnotate,
     IconArrowBack,
     IconArrowDown,
     IconArrowDownLarge,
@@ -161,6 +167,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconHangup,
     IconHelp,
     IconHighlight,
+    IconHost,
     IconImage,
     IconInfo,
     IconInfoCircle,
@@ -168,6 +175,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconMeter,
     IconMic,
     IconMicSlash,
+    IconMicWarning,
     IconModerator,
     IconNoiseSuppressionOff,
     IconNoiseSuppressionOn,
@@ -175,6 +183,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconOffice365,
     IconPerformance,
     IconPhoneRinging,
+    IconPictureInPicture,
     IconPin,
     IconPinned,
     IconPlay,
@@ -209,6 +218,7 @@ export const DEFAULT_ICON: Record<string, any> = {
     IconUser,
     IconVideo,
     IconVideoOff,
+    IconVideoWarning,
     IconVolumeOff,
     IconVolumeUp,
     IconWarning,

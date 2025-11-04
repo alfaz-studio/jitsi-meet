@@ -17,3 +17,14 @@ export function hasAvailableDevices(state: IReduxState, type: string) {
 
     return Number(availableDevices[type as keyof typeof availableDevices]?.length) > 0;
 }
+
+/**
+ * Returns true if the user has granted permission for the given device type.
+ *
+ * @param {Object} state - The state of the application.
+ * @param {string} type - The type of device: 'audio' | 'video'.
+ * @returns {boolean}
+ */
+export function hasDevicePermission(state: IReduxState, type: 'audio' | 'video') {
+    return Boolean(state['features/base/devices']?.permissions?.[type]);
+}

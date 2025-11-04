@@ -16,16 +16,19 @@ export interface IToolboxNativeButton {
     text?: string;
 }
 
-export type ToolbarButton = 'camera' |
+export type ToolbarButton = 'annotate' |
+    'camera' |
     'chat' |
     'closedcaptions' |
     'desktop' |
     'download' |
+    'downloaddata' |
     'embedmeeting' |
     'etherpad' |
     'feedback' |
     'filmstrip' |
     'fullscreen' |
+    'pip' |
     'hangup' |
     'help' |
     'highlight' |
