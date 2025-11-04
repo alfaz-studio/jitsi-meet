@@ -45,7 +45,7 @@ export default class ScreenshotCaptureSummary {
 
         this._streamWorker = new Worker(
             new URL('./worker.ts', import.meta.url),
-            { 
+            {
                 name: 'Screenshot capture worker',
                 type: 'module'
             }

@@ -109,7 +109,7 @@ export default defineConfig(({ mode }) => {
             basicSsl({
                 name: 'jitsi-meet',
                 domains: [ 'localhost', '127.0.0.1', '::1' ],
-                certDir: './build/certs'
+                certDir: './build/meet/certs'
             }),
             svgr({
                 svgrOptions: {
@@ -122,7 +122,7 @@ export default defineConfig(({ mode }) => {
             react(),
             ...analyzeBundle ? [
                 visualizer({
-                    filename: './build/app-stats.html',
+                    filename: './build/meet/app-stats.html',
                     open: true,
                     gzipSize: true,
                     brotliSize: true
@@ -237,9 +237,12 @@ export default defineConfig(({ mode }) => {
             format: 'es'
         },
 
+        // Base path for deployment - matches the /meet/ subpath
+        base: '/meet/',
+
         // Handle module resolution fallbacks
         build: {
-            outDir: 'build',
+            outDir: 'build/meet',
             sourcemap: true,
             rollupOptions: {
                 input: [

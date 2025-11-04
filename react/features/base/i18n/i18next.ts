@@ -129,7 +129,7 @@ i18next.addResourceBundle(
 
 // Add builtin languages.
 // XXX: Note we are importing here, because we want the side-effects of the
-// import, but at the top it would be too early since i18next is not yet 
+// import, but at the top it would be too early since i18next is not yet
 // initialized at that point.
 import('./BuiltinLanguages');
 

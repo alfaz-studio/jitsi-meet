@@ -17,7 +17,6 @@ const models = {
 
 let modelBuffer: ArrayBuffer;
 let tflite: any;
-let wasmCheck;
 let isWasmDisabled = false;
 
 const segmentationDimensions = {

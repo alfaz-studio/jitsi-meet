@@ -98,7 +98,7 @@ class FaceLandmarksDetector {
 
         this.worker = new Worker(
             new URL('./faceLandmarksWorker.ts', import.meta.url),
-            { 
+            {
                 name: 'Face Landmarks Worker',
                 type: 'module'
             }

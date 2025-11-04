@@ -1,8 +1,7 @@
 import { INoiseSuppressionConfig } from '../../base/config/configType';
 import { getBaseUrl } from '../../base/util/helpers';
 
-import workletUrl from "./NoiseSuppressorWorklet?worker&url";
-
+import workletUrl from './NoiseSuppressorWorklet?worker&url';
 import logger from './logger';
 
 interface IKrispState {

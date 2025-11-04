@@ -747,6 +747,9 @@ var config = {
 
         // Enables the lobby chat. Replaces `enableLobbyChat`.
         enableChat: true,
+
+        // Shows the hangup button in the lobby screen.
+        showHangUp: true,
     },
 
     // Configs for the security related UI elements.
