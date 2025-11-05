@@ -157,7 +157,7 @@ class FaceLandmarksDetector {
 
         this.worker.postMessage({
             type: INIT_WORKER,
-            baseUrl: '', // Vite mode - baseUrl not needed
+            baseUrl: '/meet/', // Base path for model loading
             detectionTypes
         });
         this.initialized = true;

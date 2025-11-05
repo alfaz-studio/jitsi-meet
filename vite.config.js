@@ -204,6 +204,14 @@ export default defineConfig(({ mode }) => {
             'interfaceConfig': 'window.interfaceConfig'
         },
 
+        // Pre-optimize dependencies to prevent reload on first meeting join
+        optimizeDeps: {
+            include: [
+                '@tensorflow/tfjs-backend-wasm',
+                '@vladmandic/human'
+            ]
+        },
+
         resolve: {
             alias: {
                 'focus-visible': 'focus-visible/dist/focus-visible.min.js',
