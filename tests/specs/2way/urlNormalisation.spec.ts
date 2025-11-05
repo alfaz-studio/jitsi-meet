@@ -24,7 +24,6 @@ describe('URL Normalisation', () => {
         }
 
         await ensureTwoParticipants({
-            tenant: 'tenant@example.com',
             roomName: `${ctx.roomName}@example.com`,
             participantOptions: [
                 { participant: 'p1', status: 'active' },
@@ -40,7 +39,7 @@ describe('URL Normalisation', () => {
 
         const parts = path.split('/');
 
-        expect(parts[1]).toBe('tenantexample.com');
+        expect(parts[1]).toBe('meet');
 
         // @ts-ignore
         expect(parts[2]).toBe(`${ctx.roomName}example.com`);

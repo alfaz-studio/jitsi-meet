@@ -10,9 +10,6 @@ describe('Mute', () => {
         console.log('[STEP 1] Setting up two-participant conference...');
 
         await ensureTwoParticipants({
-            configOverwrite: {
-                prejoinConfig: { enabled: false }
-            },
             skipInMeetingChecks: true,
             participantOptions: [
                 { participant: 'p1', status: 'active' },
@@ -35,8 +32,7 @@ describe('Mute', () => {
 
 
         console.log('[STEP 2] Testing mute/unmute for p1...');
-        // await p1.driver.debug()
-        // await p2.driver.debug();
+
         await toggleMuteAndCheck(p1, p2, true); // Mute
         await toggleMuteAndCheck(p1, p2, false); // Unmute
         console.log('[STEP 2] P1 mute/unmute verified.');
