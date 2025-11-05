@@ -6,6 +6,8 @@ import { IReduxState } from '../../../app/types';
 import DialogPortal from '../../../toolbox/components/web/DialogPortal';
 import Drawer from '../../../toolbox/components/web/Drawer';
 import JitsiPortal from '../../../toolbox/components/web/JitsiPortal';
+import { isMobileBrowser } from '../../environment/utils';
+import MobileBackButton from '../../responsive-ui/mobileBackButtonUtils';
 import { isElementInTheViewport } from '../../ui/functions.web';
 import { getContextMenuStyle } from '../functions.web';
 
@@ -154,6 +156,8 @@ class Popover extends Component<IProps, IState> {
 
     _contextMenuRef: HTMLElement;
 
+    _backButtonId: string | undefined = undefined;
+
     /**
      * Initializes a new {@code Popover} instance.
      *
@@ -196,6 +200,32 @@ class Popover extends Component<IProps, IState> {
             // @ts-ignore
             window.addEventListener('click', this._onOutsideClick);
         }
+
+        if (this.props.visible && this.props.overflowDrawer && isMobileBrowser()) {
+            MobileBackButton.push(this.props.onPopoverClose);
+        }
+    }
+
+    /**
+     * Implements React's {@link Component#componentDidUpdate}.
+     *
+     * @inheritdoc
+     * @param {IProps} prevProps - The previous props.
+     */
+    override componentDidUpdate(prevProps: IProps) {
+        if (this.props.overflowDrawer && isMobileBrowser()) {
+            const becameVisible = !prevProps.visible && this.props.visible;
+            const becameHidden = prevProps.visible && !this.props.visible;
+
+            if (becameVisible) {
+                // Store the ID when we push the handler.
+                this._backButtonId = MobileBackButton.push(this._onHideDialog);
+            } else if (becameHidden) {
+                // When it closes by other means, pop using the stored ID.
+                MobileBackButton.pop(this._backButtonId);
+                this._backButtonId = undefined; // Clear the ID
+            }
+        }
     }
 
     /**
@@ -209,6 +239,11 @@ class Popover extends Component<IProps, IState> {
         if (this.props.trigger === 'click') {
             // @ts-ignore
             window.removeEventListener('click', this._onOutsideClick);
+        }
+
+        if (this._backButtonId) {
+            MobileBackButton.pop(this._backButtonId);
+            this._backButtonId = undefined;
         }
     }
 
