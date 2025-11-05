@@ -4,7 +4,6 @@ import { Buffer } from 'buffer';
 import { glob } from 'glob';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import pretty from 'pretty';
 
 import { getTestProperties, loadTestFiles } from './helpers/TestProperties';
