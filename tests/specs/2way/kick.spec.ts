@@ -6,7 +6,11 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 describe('Kick', () => {
     it('joining the meeting', async () => {
         await ensureTwoParticipants({
-            useActiveToken: true
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
         });
 
         if (!await ctx.p1.isModerator()) {
@@ -24,7 +28,10 @@ describe('Kick', () => {
                 }
             },
             skipWaitToJoin: true,
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
         });
 
         await kickParticipant2AndCheck();

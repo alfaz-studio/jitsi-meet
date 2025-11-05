@@ -26,24 +26,37 @@ export async function loginUser(displayName: string, options?: IJoinOptions) {
     let loginEmail: string | undefined = undefined;
     let loginPassword: string | undefined = undefined;
 
+    // Determine the prefix for the environment variables based on the participant
+    const participantPrefix = displayName.toUpperCase(); // P1, P2, etc.
+
+    // Determine the status suffix
+    let statusSuffix = '';
+
     if (options?.useActiveToken) {
-        loginEmail = process.env.SONA_EMAIL1!;
-        loginPassword = process.env.SONA_PASSWORD1!;
+        statusSuffix = 'ACTIVE';
     } else if (options?.useTrialingToken) {
-        loginEmail = process.env.SONA_EMAIL2!;
-        loginPassword = process.env.SONA_PASSWORD2!;
+        statusSuffix = 'TRIALING';
     } else if (options?.useInactiveToken) {
-        loginEmail = process.env.SONA_EMAIL3!;
-        loginPassword = process.env.SONA_PASSWORD3!;
+        statusSuffix = 'INACTIVE';
     }
 
+    if (statusSuffix) {
+        // Construct the dynamic environment variable keys
+        const emailKey = `SONA_${participantPrefix}_${statusSuffix}_EMAIL`;
+        const passwordKey = `SONA_${participantPrefix}_${statusSuffix}_PASSWORD`;
+
+        loginEmail = process.env[emailKey];
+        loginPassword = process.env[passwordKey];
+    }
+
+    // This check now correctly validates if the specific user credentials were found
     if (!loginEmail || !loginPassword) {
-        throw new Error("Credentials must be provided in .env file");
+        throw new Error(`Credentials for ${displayName} with status ${statusSuffix} not found in .env file.`);
     }
 
+    // The rest of the function remains identical as its logic for driving the UI is correct.
     const driver = multiremotebrowser.getInstance(displayName);
-    const baseUrl = process.env.BASE_URL || "https://sonacove.com/meet/";
-
+    const baseUrl = process.env.BASE_URL || 'https://sonacove.com/meet/';
     const baseOrigin = new URL(baseUrl).origin;
 
     try {
@@ -55,7 +68,7 @@ export async function loginUser(displayName: string, options?: IJoinOptions) {
         const authServiceUrl = `${baseOrigin}/meet/static/auth-service.js`;
 
         await driver.execute((scriptUrl: string) => {
-            const script = document.createElement("script");
+            const script = document.createElement('script');
 
             script.src = scriptUrl;
             document.head.appendChild(script);
@@ -63,10 +76,9 @@ export async function loginUser(displayName: string, options?: IJoinOptions) {
 
         // Wait for the AuthService to be fully ready.
         await driver.waitUntil(
-            async () => await driver.execute(() => typeof window.AuthService?.getAuthService === "function"),
-            { timeout: 15000, timeoutMsg: "AuthService did not load on the page" }
+            async () => await driver.execute(() => typeof window.AuthService?.getAuthService === 'function'),
+            { timeout: 15000, timeoutMsg: 'AuthService did not load on the page' }
         );
-        console.log("[AUTH] AuthService is ready.");
 
         const callbackUrl = `${baseOrigin}/static/callback.html`;
 
@@ -75,22 +87,22 @@ export async function loginUser(displayName: string, options?: IJoinOptions) {
         }, callbackUrl);
 
         // Automate the Keycloak login form.
-        const usernameInput = await driver.$("#username");
+        const usernameInput = await driver.$('#username');
 
         await usernameInput.waitForDisplayed({
             timeout: 15000,
-            timeoutMsg: "Failed to redirect to Keycloak login page.",
+            timeoutMsg: 'Failed to redirect to Keycloak login page.',
         });
         await usernameInput.setValue(loginEmail);
-        const passwordInput = await driver.$("#password");
+        const passwordInput = await driver.$('#password');
 
         await passwordInput.setValue(loginPassword);
-        await driver.$("#kc-login").click();
+        await driver.$('#kc-login').click();
 
         // Wait to be redirected back to our simple callback page.
         await driver.waitUntil(async () => (await driver.getUrl()).startsWith(callbackUrl), {
             timeout: 15000,
-            timeoutMsg: "Failed to redirect back to callback.html after login.",
+            timeoutMsg: 'Failed to redirect back to callback.html after login.',
         });
     } catch (error) {
         console.error(`Error fetching Sona token for ${displayName}:`, error);

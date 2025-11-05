@@ -1,7 +1,10 @@
 import { multiremotebrowser } from '@wdio/globals';
 
+import { setTestProperties } from '../../helpers/TestProperties';
 import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('URL Normalisation', () => {
     it('joining the meeting', async () => {
@@ -22,7 +25,11 @@ describe('URL Normalisation', () => {
 
         await ensureTwoParticipants({
             tenant: 'tenant@example.com',
-            roomName: `${ctx.roomName}@example.com`
+            roomName: `${ctx.roomName}@example.com`,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
         });
     });
 

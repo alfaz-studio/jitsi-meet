@@ -6,7 +6,10 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Self view', () => {
     it('joining the meeting', () => ensureTwoParticipants({
-        useActiveToken: true
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
     }));
 
     it('hide from menu', async () => {

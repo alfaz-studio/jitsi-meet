@@ -10,7 +10,9 @@ describe('Video Layout', () => {
             configOverwrite: {
                 prejoinConfig: { enabled: false }
             },
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
         });
     });
 

@@ -19,7 +19,9 @@ describe('Fake Dial-In', () => {
 
         await ensureOneParticipant({
             skipWaitToJoin: true,
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+            ]
         });
 
         // check dial-in is enabled, so skip
@@ -41,7 +43,10 @@ describe('Fake Dial-In', () => {
         }
 
         await ensureTwoParticipants({
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'trialing' }
+            ]
         });
     });
 

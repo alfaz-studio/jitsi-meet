@@ -10,12 +10,14 @@ describe('Auth Check', () => {
     it('should place a guest in the lobby when they are the first to join', async function() {
 
         console.log('[SCENARIO 1] p1 joining as a guest...');
-        // Join as a guest by not providing a JWT.
         await joinFirstParticipant({
             configOverwrite: { prejoinConfig: { enabled: true } },
             skipWaitToJoin: true,
             skipInMeetingChecks: true,
-            skipFirstModerator: true
+            skipFirstModerator: true,
+            participantOptions: [
+                { participant: 'p1', status: 'guest' }
+            ]
         });
 
         const p1 = ctx.p1;
@@ -47,7 +49,9 @@ describe('Auth Check', () => {
                 configOverwrite: {
                     prejoinConfig: { enabled: false },
                 },
-                useActiveToken: true
+                participantOptions: [
+                    { participant: 'p1', status: 'active' }
+                ]
             });
             expect(await ctx.p1.isInMuc()).toBe(true);
             console.log('[SETUP] p1 is in the meeting.');
@@ -57,7 +61,7 @@ describe('Auth Check', () => {
             console.log('[TEST] p2 (guest) is joining...');
             await joinSecondParticipant({
                 skipDisplayName: true,
-                useTrialingToken: true
+                participantOptions: [ { participant: 'p2', status: 'trialing' } ],
             });
             expect(await ctx.p2.isInMuc()).toBe(true);
             console.log('[TEST] p2 (guest) joined successfully.');
@@ -66,7 +70,7 @@ describe('Auth Check', () => {
         it('should allow an unsubscribed user to join', async () => {
             console.log('[TEST] p2 (unsubscribed) is joining...');
             await joinSecondParticipant({
-                useTrialingToken: true
+                participantOptions: [ { participant: 'p2', status: 'trialing' } ],
             });
             expect(await ctx.p2.isInMuc()).toBe(true);
             console.log('[TEST] p2 (unsubscribed) joined successfully.');
@@ -75,7 +79,9 @@ describe('Auth Check', () => {
         it('should allow another subscribed user to join', async () => {
             console.log('[TEST] p2 (subscribed) is joining...');
             await joinSecondParticipant({
-                useActiveToken: true
+                participantOptions: [
+                    { participant: 'p2', status: 'active' }
+                ]
             });
             expect(await ctx.p2.isInMuc()).toBe(true);
             console.log('[TEST] p2 (subscribed) joined successfully.');

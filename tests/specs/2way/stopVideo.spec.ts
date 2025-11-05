@@ -1,101 +1,61 @@
 import { setTestProperties } from '../../helpers/TestProperties';
-import { config as testsConfig } from '../../helpers/TestsConfig';
-import { ensureOneParticipant, joinFirstParticipant, joinSecondParticipant } from '../../helpers/participants';
+import { ensureTwoParticipants, joinSecondParticipant, muteVideoAndCheck, unmuteAudioAndCheck, unmuteVideoAndCheck } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
-describe('PreJoin Screen', () => {
+describe('Stop video', () => {
+    it('joining the meeting', () => ensureTwoParticipants({
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
+    }));
 
-    it('should disable the join button for a GUEST when a display name is required but not entered', async function() {
-        await joinFirstParticipant({
-            configOverwrite: {
-                prejoinConfig: { enabled: true },
-                requireDisplayName: true,
-                // @ts-ignore
-                jwt: testsConfig.jwt.preconfiguredToken
-            },
-            skipDisplayName: true,
-            skipWaitToJoin: true,
-            skipInMeetingChecks: true,
-            skipFirstModerator: true
-        });
+    it('stop video and check', async () => {
+        await unmuteAudioAndCheck(ctx.p1, ctx.p2);
+        await unmuteAudioAndCheck(ctx.p2, ctx.p1);
 
-        const p1 = ctx.p1;
-        const p1PreJoinScreen = p1.getPreJoinScreen();
-
-        await p1PreJoinScreen.waitForLoading();
-        const joinButton = p1PreJoinScreen.getJoinButton();
-
-        await joinButton.waitForDisplayed();
-
-        const isDisabledByAria = await joinButton.getAttribute('aria-disabled');
-
-        expect(isDisabledByAria).toBe('true');
-
-        await p1.hangup();
+        muteVideoAndCheck(ctx.p1, ctx.p2);
     });
 
-    it('should allow joining without audio', async function() {
-        await joinFirstParticipant({
-            configOverwrite: {
-                prejoinConfig: { enabled: true },
-                // @ts-ignore
-                jwt: testsConfig.jwt.preconfiguredToken,
-            },
-            skipWaitToJoin: true,
-            skipInMeetingChecks: true
-        });
+    it('start video and check', () => unmuteVideoAndCheck(ctx.p1, ctx.p2));
 
-        const { p1 } = ctx;
-        const p1PreJoinScreen = p1.getPreJoinScreen();
+    it('start video and check stream', async () => {
+        await muteVideoAndCheck(ctx.p1, ctx.p2);
 
-        await p1PreJoinScreen.waitForLoading();
+        // now participant2 should be on large video
+        const largeVideoId = await ctx.p1.getLargeVideo().getId();
 
-        await p1PreJoinScreen.getJoinOptions().click();
-        const joinWithoutAudioBtn = p1PreJoinScreen.getJoinWithoutAudioButton();
+        await unmuteVideoAndCheck(ctx.p1, ctx.p2);
 
-        await joinWithoutAudioBtn.waitForClickable();
-        await joinWithoutAudioBtn.click();
-
-        await p1.waitToJoinMUC();
-        await p1.driver.$('//div[contains(@class, "audio-preview")]//div[contains(@class, "toolbox-icon") and contains(@class, "toggled") and contains(@class, "disabled")]')
-            .waitForDisplayed();
-
-        await p1.hangup();
+        // check if video stream from second participant is still on large video
+        expect(largeVideoId).toBe(await ctx.p1.getLargeVideo().getId());
     });
 
-    it('should correctly show the pre-join screen for a user joining a locked room', async function() {
-        // Step 1: p1 joins and enables the lobby
-        await ensureOneParticipant({
-            configOverwrite: {
-                prejoinConfig: { enabled: false }, // p1 joins directly
-                // @ts-ignore
-                jwt: testsConfig.jwt.preconfiguredToken,
-            },
-        });
+    it('stop video on participant and check', async () => {
+        muteVideoAndCheck(ctx.p2, ctx.p1);
+    });
+
+    it('start video on participant and check', () => unmuteVideoAndCheck(ctx.p2, ctx.p1));
+
+    it('stop video on before second joins', async () => {
+        await ctx.p2.hangup();
+
         const { p1 } = ctx;
-        const p1SecurityDialog = p1.getSecurityDialog();
 
-        await p1.getToolbar().clickSecurityButton();
-        await p1SecurityDialog.waitForDisplay();
-        await p1SecurityDialog.toggleLobby();
-        await p1SecurityDialog.waitForLobbyEnabled();
-        await p1SecurityDialog.clickCloseButton();
+        await p1.getToolbar().clickVideoMuteButton();
 
-        // Step 2: p2 attempts to join
         await joinSecondParticipant({
-            configOverwrite: {
-                prejoinConfig: { enabled: true } // Ensure p2 sees the pre-join screen
-            },
-            skipWaitToJoin: true
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p2', status: 'guest' },
+            ],
         });
 
-        // Step 3: Assert that p2 sees the pre-join screen
-        const p2PreJoinScreen = ctx.p2.getPreJoinScreen();
+        const { p2 } = ctx;
 
-        await p2PreJoinScreen.waitForLoading();
-        const joinButton = p2PreJoinScreen.getJoinButton();
+        await p2.getParticipantsPane().assertVideoMuteIconIsDisplayed(p1);
 
-        await joinButton.waitForDisplayed();
+        await unmuteVideoAndCheck(p1, p2);
     });
 });

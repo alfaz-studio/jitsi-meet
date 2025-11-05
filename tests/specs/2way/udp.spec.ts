@@ -11,7 +11,10 @@ describe('UDP', () => {
                 enabled: false
             }
         },
-        useActiveToken: true
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
     }));
 
     it('check', async () => {

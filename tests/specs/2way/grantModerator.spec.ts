@@ -7,8 +7,9 @@ describe('Grant moderator', () => {
     it('joining the meeting', async () => {
         await ensureOneParticipant({
             skipWaitToJoin: true,
-            useActiveToken: true
-        });
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+            ] });
 
         if (await ctx.p1.execute(() => typeof APP.conference._room.grantOwner !== 'function')) {
             ctx.skipSuiteTests = true;
@@ -17,7 +18,10 @@ describe('Grant moderator', () => {
         }
 
         await ensureTwoParticipants({
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'trialing' }
+            ]
         });
     });
 

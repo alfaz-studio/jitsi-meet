@@ -17,7 +17,9 @@ describe('Dial-In', () => {
 
         await ensureOneParticipant({
             preferGenerateToken: true,
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
         });
 
         // check dial-in is enabled

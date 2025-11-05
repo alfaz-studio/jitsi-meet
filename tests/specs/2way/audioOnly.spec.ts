@@ -7,8 +7,12 @@ describe('Audio only', () => {
     it('joining the meeting', () => ensureTwoParticipants({
         configOverwrite: {
             prejoinConfig: { enabled: false },
+            startWithVideoMuted: false
         },
-        useActiveToken: true
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'trialing' }
+        ]
     }));
 
     /**

@@ -5,7 +5,10 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('SwitchVideo', () => {
     it('joining the meeting', () => ensureTwoParticipants({
-        useActiveToken: true
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
     }));
 
     it('p1 click on local', () => ctx.p1.getFilmstrip().pinParticipant(ctx.p1));

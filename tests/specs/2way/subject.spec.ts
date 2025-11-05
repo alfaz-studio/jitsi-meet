@@ -13,7 +13,10 @@ describe('Subject', () => {
         configOverwrite: {
             subject: MY_TEST_SUBJECT
         },
-        useActiveToken: true
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
     }));
 
     it('check', async () => {

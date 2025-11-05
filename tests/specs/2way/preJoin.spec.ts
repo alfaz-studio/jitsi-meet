@@ -10,6 +10,9 @@ describe('PreJoin', () => {
                 prejoinConfig: { enabled: true },
                 requireDisplayName: true
             },
+            participantOptions: [
+                { participant: 'p1', status: 'guest' }
+            ],
             skipDisplayName: true,
             skipWaitToJoin: true,
             skipInMeetingChecks: true,
@@ -40,7 +43,10 @@ describe('PreJoin', () => {
                 }
             },
             skipDisplayName: true,
-            skipWaitToJoin: true
+            skipWaitToJoin: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
         });
 
         const p1PreJoinScreen = ctx.p1.getPreJoinScreen();
@@ -54,7 +60,8 @@ describe('PreJoin', () => {
         await ctx.p1.hangup();
     });
 
-    it('without audio', async () => {
+    // Skipped because the "join without audio" option has been removed from the pre-join screen.
+    it.skip('without audio', async () => {
         await joinFirstParticipant({
             configOverwrite: {
                 prejoinConfig: {

@@ -11,7 +11,9 @@ describe('Lock Room with Digits only', () => {
                 prejoinConfig: { enabled: false },
                 roomPasswordNumberOfDigits: 5,
             },
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
         });
     });
 

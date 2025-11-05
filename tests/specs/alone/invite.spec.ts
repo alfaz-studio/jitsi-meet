@@ -11,6 +11,9 @@ describe('Invite', () => {
             configOverwrite: {
                 prejoinConfig: { enabled: false },
             },
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
         });
     });
 

@@ -7,13 +7,13 @@ describe('TileView', () => {
 
     it('joins the meeting and prepares the UI', async function() {
 
-        // 1. Join the conference with our full, correct configuration
         await ensureTwoParticipants({
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
         });
     });
-
-    // --- All subsequent 'it' blocks are for testing ---
 
     it('enters tile view', async () => {
         await ctx.p1.getToolbar().clickEnterTileViewButton();

@@ -14,7 +14,10 @@ describe('Mute', () => {
                 prejoinConfig: { enabled: false }
             },
             skipInMeetingChecks: true,
-            useActiveToken: true
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'trialing' }
+            ]
         });
 
         const { p1, p2 } = ctx;
@@ -27,8 +30,13 @@ describe('Mute', () => {
         console.log('[STEP 1] Media connections established.');
         console.log('[STEP 1] Setup complete.');
 
+        await unmuteAudioAndCheck(p1, p2);
+        await unmuteAudioAndCheck(p2, p1);
+
 
         console.log('[STEP 2] Testing mute/unmute for p1...');
+        // await p1.driver.debug()
+        // await p2.driver.debug();
         await toggleMuteAndCheck(p1, p2, true); // Mute
         await toggleMuteAndCheck(p1, p2, false); // Unmute
         console.log('[STEP 2] P1 mute/unmute verified.');

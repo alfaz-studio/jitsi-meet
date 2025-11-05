@@ -5,7 +5,10 @@ setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('End Conference', () => {
     it('joining the meeting', () => ensureTwoParticipants({
-        useActiveToken: true
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'trialing' }
+        ]
     }));
 
     it('hangup call and check', async () => {

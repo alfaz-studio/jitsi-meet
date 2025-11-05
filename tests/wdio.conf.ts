@@ -4,6 +4,7 @@ import { Buffer } from 'buffer';
 import { glob } from 'glob';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 import pretty from 'pretty';
 
 import { getTestProperties, loadTestFiles } from './helpers/TestProperties';
@@ -36,7 +37,7 @@ const chromeArgs = [
     // Avoids - "You are checking for animations on an inactive tab, animations do not run for inactive tabs"
     // when executing waitForStable()
     '--disable-renderer-backgrounding',
-    '--use-file-for-fake-audio-capture=tests/resources/fakeAudioStream.wav'
+    `--use-file-for-fake-audio-capture=${path.resolve(__dirname, 'resources/fakeAudioStream.wav')}`,
 ];
 
 if (process.env.RESOLVER_RULES) {
