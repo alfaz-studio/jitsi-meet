@@ -738,7 +738,7 @@ var config = {
         disabled: false,
 
         // If set, landing page will redirect to this URL.
-        customUrl: '/meets',
+        // customUrl: '/meet',
     },
 
     // Configs for the lobby screen.
@@ -748,6 +748,9 @@ var config = {
 
         // Enables the lobby chat. Replaces `enableLobbyChat`.
         enableChat: true,
+
+        // Shows the hangup button in the lobby screen.
+        showHangUp: false,
     },
 
     // Configs for the security related UI elements.

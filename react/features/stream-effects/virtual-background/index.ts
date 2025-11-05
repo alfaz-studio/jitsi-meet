@@ -17,7 +17,6 @@ const models = {
 
 let modelBuffer: ArrayBuffer;
 let tflite: any;
-let wasmCheck;
 let isWasmDisabled = false;
 
 const segmentationDimensions = {
@@ -56,7 +55,7 @@ export async function createVirtualBackgroundEffect(virtualBackground: IBackgrou
 
     if (!tflite) {
         try {
-            wasmCheck = require('wasm-check');
+            const { default: wasmCheck } = await import('wasm-check');
             const tfliteTimeout = 10000;
 
             if (wasmCheck?.feature?.simd) {

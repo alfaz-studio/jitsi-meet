@@ -8,6 +8,8 @@ import Drawer from '../../../../toolbox/components/web/Drawer';
 import JitsiPortal from '../../../../toolbox/components/web/JitsiPortal';
 import { showOverflowDrawer } from '../../../../toolbox/functions.web';
 import participantsPaneTheme from '../../../components/themes/participantsPaneTheme.json';
+import { isMobileBrowser } from '../../../environment/utils';
+import MobileBackButton from '../../../responsive-ui/mobileBackButtonUtils';
 import { spacing } from '../../Tokens';
 
 
@@ -192,6 +194,18 @@ const ContextMenu = ({
     const containerRef = useRef<HTMLDivElement | null>(null);
     const { classes: styles, cx } = useStyles();
     const _overflowDrawer = useSelector(showOverflowDrawer);
+    const backButtonId = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (isDrawerOpen && _overflowDrawer && isMobileBrowser() && typeof onDrawerClose === 'function') {
+            backButtonId.current = MobileBackButton.push(onDrawerClose);
+
+            return () => {
+                MobileBackButton.pop(backButtonId.current ?? undefined);
+                backButtonId.current = null;
+            };
+        }
+    }, [ isDrawerOpen, _overflowDrawer, onDrawerClose ]);
 
     useLayoutEffect(() => {
         if (_overflowDrawer) {

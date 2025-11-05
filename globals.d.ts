@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import { IStore } from "./react/features/app/types";
 import { IConfig } from "./react/features/base/config/configType";
 

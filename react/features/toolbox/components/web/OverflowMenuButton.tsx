@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
 import { createToolbarEvent } from '../../../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../../../analytics/functions';
+import { isMobileBrowser } from '../../../base/environment/utils';
 import Popover from '../../../base/popover/components/Popover.web';
+import MobileBackButton from '../../../base/responsive-ui/mobileBackButtonUtils';
 import ContextMenu from '../../../base/ui/components/web/ContextMenu';
 import ContextMenuItemGroup from '../../../base/ui/components/web/ContextMenuItemGroup';
 import { setGifMenuVisibility } from '../../../gifs/actions';
@@ -114,6 +116,7 @@ const OverflowMenuButton = ({
     const overflowDrawer = useSelector(showOverflowDrawer);
     const reactionsQueue = useSelector(getReactionsQueue);
     const isGiphyVisible = useSelector(isGifsMenuOpen);
+    const backButtonId = useRef<string | null>(null);
     const dispatch = useDispatch();
 
     const onCloseDialog = useCallback(() => {
@@ -134,6 +137,17 @@ const OverflowMenuButton = ({
             onCloseDialog();
         }
     }, [ onCloseDialog ]);
+
+    useEffect(() => {
+        if (isOpen && overflowDrawer && isMobileBrowser()) {
+            backButtonId.current = MobileBackButton.push(onCloseDialog);
+
+            return () => {
+                MobileBackButton.pop(backButtonId.current ?? undefined);
+                backButtonId.current = null;
+            };
+        }
+    }, [ isOpen, overflowDrawer, onCloseDialog ]);
 
     const toggleDialogVisibility = useCallback(() => {
         sendAnalytics(createToolbarEvent('overflow'));
