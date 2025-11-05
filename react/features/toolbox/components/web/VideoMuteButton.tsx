@@ -326,7 +326,7 @@ class VideoMuteButton extends AbstractVideoMuteButton<IProps> {
  */
 function _mapStateToProps(state: IReduxState) {
     const { gumPending } = state['features/base/media'].video;
-    const _hasTrack = Boolean(getLocalTrack(state['features/base/tracks'], MEDIA_TYPE.AUDIO));
+    const _hasTrack = Boolean(getLocalTrack(state['features/base/tracks'], MEDIA_TYPE.VIDEO));
 
     return {
         ...abstractMapStateToProps(state),
