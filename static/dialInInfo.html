@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--#include virtual="/base.html" -->
     <!--#include virtual="/plugin.head.html" -->
-    <link rel="stylesheet" href="css/all.css">
+    <link rel="stylesheet" href="../css/main.scss" />
     <script>
       window.EXCALIDRAW_ASSET_PATH = 'libs/';
       document.addEventListener('DOMContentLoaded', () => {
@@ -22,9 +22,7 @@
     <script><!--#include virtual="/config.js" --></script>
     <script><!--#include virtual="/interface_config.js" --></script>
     <script src="libs/lib-jitsi-meet.min.js?v=139"></script>
-    <script src="libs/react.min.js?v=139"></script>
-    <script src="libs/vendor.min.js?v=139"></script>
-    <script src="libs/app.bundle.min.js?v=139"></script>
+    <script src="../app.js" type="module"></script>
   </head>
   <body>
     <div id="react" role="main"></div>

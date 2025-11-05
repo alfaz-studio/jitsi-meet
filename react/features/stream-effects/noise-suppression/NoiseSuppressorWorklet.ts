@@ -1,3 +1,4 @@
+import { createRNNWasmModuleSync } from '@jitsi/rnnoise-wasm';
 
 import { leastCommonMultiple } from '../../base/util/math';
 import RnnoiseProcessor from '../rnnoise/RnnoiseProcessor';
@@ -61,21 +62,16 @@ class NoiseSuppressorWorklet extends AudioWorkletProcessor {
     constructor() {
         super();
 
-        // Initialize the processor asynchronously
         this._initializeProcessor();
     }
 
     /**
-     * Initialize the rnnoise processor asynchronously.
+     * Initialize the rnnoise processor.
      *
-     * @returns {Promise<void>} Promise that resolves when initialization is complete.
+     * @returns {void}
      */
-    private async _initializeProcessor() {
+    private _initializeProcessor() {
         try {
-            // Dynamically import the rnnoise module
-            const rnnoiseModule = await import(/* webpackChunkName: "rnnoise" */ '@jitsi/rnnoise-wasm' as any);
-            const { createRNNWasmModuleSync } = rnnoiseModule;
-
             this._denoiseProcessor = new RnnoiseProcessor(createRNNWasmModuleSync());
             this._denoiseSampleSize = this._denoiseProcessor.getSampleLength();
 

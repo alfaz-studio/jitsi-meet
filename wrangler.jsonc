@@ -3,7 +3,7 @@
     "compatibility_date": "2025-05-07",
     // "main": "functions/index.ts",
     "assets": {
-        "directory": "../dist",
+        "directory": "build",
         "not_found_handling": "404-page"
         // "html_handling": "drop-trailing-slash"
     },
