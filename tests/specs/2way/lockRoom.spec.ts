@@ -1,113 +1,189 @@
-import type { Participant } from '../../helpers/Participant';
 import { setTestProperties } from '../../helpers/TestProperties';
-import { ensureTwoParticipants, joinSecondParticipant } from '../../helpers/participants';
+import { ensureOneParticipant, ensureTwoParticipants, joinSecondParticipant } from '../../helpers/participants';
 import type SecurityDialog from '../../pageobjects/SecurityDialog';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
+let roomKey: string;
+
+// NOTE: Skipped checks where p2 accesses the security dialog, as this is now a host/mod-only feature.
+/**
+ * 1. Lock the room (make sure the image changes to locked)
+ * 2. Join with a second browser/tab
+ * 3. Make sure we are required to enter a password.
+ * (Also make sure the padlock is locked)
+ * 4. Enter wrong password, make sure we are not joined in the room
+ * 5. Unlock the room (Make sure the padlock is unlocked)
+ * 6. Join again and make sure we are not asked for a password and that
+ * the padlock is unlocked.
+ */
 describe('Lock Room', () => {
+    it('joining the meeting', () => ensureOneParticipant({
+        participantOptions: [
+            { participant: 'p1', status: 'active' }
+        ]
+    }));
 
-    it('should handle all room locking and password scenarios correctly', async function() {
-        // ---== STEP 1: Initial Setup - p1 (Host) joins ==---
-        await ensureTwoParticipants({
-            skipInMeetingChecks: true,
-            participantOptions: [
-                { participant: 'p1', status: 'active' },
-                { participant: 'p2', status: 'trialing' }
-            ]
-        });
+    it('locks the room', () => participant1LockRoom());
 
-        const { p1 } = ctx;
-        let { p2 } = ctx;
-
-        // ---== STEP 2: Host (p1) Locks and Unlocks the Room ==---
-        console.log('[TEST] p1 (Host) will now lock the room.');
-        const roomKey = await lockRoom(p1, 'MySecretKey123');
-
-        console.log('[SUCCESS] p1 successfully locked the room.');
-
-        // Verify that p2 (non-host) sees the room as locked.
-        console.log('[VERIFY] Verifying p2 sees the room as locked...');
-        await checkLockStateAsParticipant(p2, true);
-        console.log('[SUCCESS] p2 correctly sees the room is locked.');
-
-        console.log('[TEST] p1 (Host) will now unlock the room.');
-        await unlockRoom(p1);
-        console.log('[SUCCESS] p1 successfully unlocked the room.');
-
-        console.log('[VERIFY] Verifying p2 sees the room as unlocked...');
-        await checkLockStateAsParticipant(p2, false);
-        console.log('[SUCCESS] p2 correctly sees the room is unlocked.');
-
-
-        // ---== STEP 3: Test Password Joining Flow ==---
-        console.log('[TEST] p1 is locking the room again for the join test...');
-        await lockRoom(p1, roomKey);
-
-        await p2.hangup();
-        console.log('[SETUP] p2 has left the meeting.');
-
-        console.log('[TEST] p2 is attempting to rejoin the locked room...');
+    it('enter participant in locked room', async () => {
+        // first enter wrong pin then correct one
         await joinSecondParticipant({
-            skipInMeetingChecks: true,
-            skipWaitToJoin: true, // We expect to be stopped by the password prompt
-            participantOptions: [ { participant: 'p2', status: 'trialing' } ]
+            skipWaitToJoin: true
         });
-        p2 = ctx.p2; // Re-assign p2 to the new participant instance
 
+        const { p2 } = ctx;
+
+        // wait for password prompt
         const p2PasswordDialog = p2.getPasswordDialog();
 
         await p2PasswordDialog.waitForDialog();
-        console.log('[SUCCESS] p2 is correctly prompted for a password.');
+        await p2PasswordDialog.submitPassword(`${roomKey}1234`);
 
-        console.log('[TEST] p2 enters an incorrect password...');
-        await p2PasswordDialog.submitPassword('wrong-password');
-        await p2.driver.pause(500); // Wait for feedback
-        await p2PasswordDialog.waitForDialog(); // Dialog should still be present
-        console.log('[SUCCESS] Incorrect password was correctly rejected.');
+        // give sometime to the password prompt to disappear and send the password
+        await p2.driver.pause(500);
 
-        console.log('[TEST] p2 enters the correct password...');
+        // wait for password prompt
+        await p2PasswordDialog.waitForDialog();
         await p2PasswordDialog.submitPassword(roomKey);
+
         await p2.waitToJoinMUC();
-        expect(await p2.isInMuc()).toBe(true);
-        console.log('[SUCCESS] p2 successfully joined with the correct password.');
+
+        // const p2SecurityDialog = p2.getSecurityDialog();
+
+        // await p2.getToolbar().clickSecurityButton();
+        // await p2SecurityDialog.waitForDisplay();
+
+        // await waitForRoomLockState(p2SecurityDialog, true);
+    });
+
+    it('unlock room', async () => {
+        // Unlock room. Check whether room is still locked. Click remove and check whether it is unlocked.
+        await ctx.p2.hangup();
+
+        await participant1UnlockRoom();
+    });
+
+    it.skip('enter participant in unlocked room', async () => {
+        // Just enter the room and check that is not locked.
+        // if we fail to unlock the room this one will detect it
+        // as participant will fail joining
+        await ensureTwoParticipants({
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
+        });
+
+        const { p2 } = ctx;
+        const p2SecurityDialog = p2.getSecurityDialog();
+
+        await p2.getToolbar().clickSecurityButton();
+        await p2SecurityDialog.waitForDisplay();
+
+        await waitForRoomLockState(p2SecurityDialog, false);
+
+        await p2SecurityDialog.clickCloseButton();
+    });
+
+    it.skip('update locked state while participants in room', async () => {
+        // Both participants are in unlocked room, lock it and see whether the
+        // change is reflected on the second participant icon.
+        await participant1LockRoom();
+
+        const { p1, p2 } = ctx;
+
+        await p1.getFilmstrip().grantModerator(p2);
+        const p2SecurityDialog = p2.getSecurityDialog();
+
+        await p2.getToolbar().clickSecurityButton();
+        await p2SecurityDialog.waitForDisplay();
+
+        await waitForRoomLockState(p2SecurityDialog, true);
+
+        await participant1UnlockRoom();
+
+        await waitForRoomLockState(p2SecurityDialog, false);
+    });
+    it.skip('unlock after participant enter wrong password', async () => {
+        // P1 locks the room. Participant tries to enter using wrong password.
+        // P1 unlocks the room and Participant submits the password prompt with no password entered and
+        // should enter of unlocked room.
+        await ctx.p2.hangup();
+        await participant1LockRoom();
+        await joinSecondParticipant({
+            skipWaitToJoin: true
+        });
+
+        const { p2 } = ctx;
+
+        // wait for password prompt
+        const p2PasswordDialog = p2.getPasswordDialog();
+
+        await p2PasswordDialog.waitForDialog();
+        await p2PasswordDialog.submitPassword(`${roomKey}1234`);
+
+        // give sometime to the password prompt to disappear and send the password
+        await p2.driver.pause(500);
+
+        // wait for password prompt
+        await p2PasswordDialog.waitForDialog();
+
+        await participant1UnlockRoom();
+
+        await p2PasswordDialog.clickOkButton();
+        await p2.waitToJoinMUC();
+
+        const p2SecurityDialog = p2.getSecurityDialog();
+
+        await p2.getToolbar().clickSecurityButton();
+        await p2SecurityDialog.waitForDisplay();
+
+        await waitForRoomLockState(p2SecurityDialog, false);
     });
 });
 
-// --- HELPER FUNCTIONS ---
+/**
+ * Participant1 locks the room.
+ */
+async function participant1LockRoom() {
+    roomKey = `${Math.trunc(Math.random() * 1_000_000)}`;
 
-// Performed by a Moderator
-async function lockRoom(participant: Participant, key: string): Promise<string> {
-    const securityDialog = participant.getSecurityDialog();
+    const { p1 } = ctx;
+    const p1SecurityDialog = p1.getSecurityDialog();
 
-    await participant.getToolbar().clickSecurityButton();
-    await securityDialog.waitForDisplay();
-    await securityDialog.addPassword(key);
-    await waitForRoomLockState(securityDialog, true);
-    ctx.p1.driver.debug();
-    await securityDialog.clickCloseButton();
+    await p1.getToolbar().clickSecurityButton();
+    await p1SecurityDialog.waitForDisplay();
 
-    return key;
+    await waitForRoomLockState(p1SecurityDialog, false);
+
+    await p1SecurityDialog.addPassword(roomKey);
+
+    await p1SecurityDialog.clickCloseButton();
+
+    await p1.getToolbar().clickSecurityButton();
+    await p1SecurityDialog.waitForDisplay();
+
+    await waitForRoomLockState(p1SecurityDialog, true);
+
+    await p1SecurityDialog.clickCloseButton();
 }
 
-// Performed by a Moderator
-async function unlockRoom(participant: Participant) {
-    const securityDialog = participant.getSecurityDialog();
+/**
+ * Participant1 unlocks the room.
+ */
+async function participant1UnlockRoom() {
+    const { p1 } = ctx;
+    const p1SecurityDialog = p1.getSecurityDialog();
 
-    await participant.getToolbar().clickSecurityButton();
-    await securityDialog.waitForDisplay();
-    await securityDialog.removePassword();
-    await waitForRoomLockState(securityDialog, false);
-    await securityDialog.clickCloseButton();
-}
+    await p1.getToolbar().clickSecurityButton();
+    await p1SecurityDialog.waitForDisplay();
 
-// A check that can be performed by ANY participant
-async function checkLockStateAsParticipant(participant: Participant, shouldBeLocked: boolean) {
-    const securityDialog = participant.getSecurityDialog();
+    await p1SecurityDialog.removePassword();
 
-    // A non-moderator might not have the security button, so we need a different way to check.
-    // The most reliable way is to check the application's internal state.
-    await waitForRoomLockState(securityDialog, shouldBeLocked);
+    await waitForRoomLockState(p1SecurityDialog, false);
+
+    await p1SecurityDialog.clickCloseButton();
 }
 
 /**

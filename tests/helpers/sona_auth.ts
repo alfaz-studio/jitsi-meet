@@ -83,7 +83,7 @@ export async function loginUser(displayName: string, options?: IJoinOptions) {
         const callbackUrl = `${baseOrigin}/static/callback.html`;
 
         await driver.execute((state: string) => {
-            window.AuthService.getAuthService().login({ state });
+            window.AuthService?.getAuthService().login({ state });
         }, callbackUrl);
 
         // Automate the Keycloak login form.
@@ -109,7 +109,6 @@ export async function loginUser(displayName: string, options?: IJoinOptions) {
         throw error;
     }
 }
-
 
 /**
  * Clear the token cache for a specific participant or all participants
