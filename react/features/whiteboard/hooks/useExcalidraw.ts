@@ -36,7 +36,9 @@ export function useExcalidrawApp() {
         try {
             const excalidrawModule = await _getExcalidraw();
 
-            setExcalidrawApp(excalidrawModule.ExcalidrawApp);
+            // IMPORTANT: Wrap in a function to prevent React from calling it during setState
+            // When setState receives a function, it treats it as a functional update and calls it
+            setExcalidrawApp(() => excalidrawModule.ExcalidrawApp);
 
             return excalidrawModule.ExcalidrawApp;
         } catch (err) {
