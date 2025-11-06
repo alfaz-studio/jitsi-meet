@@ -120,8 +120,8 @@ MiddlewareRegistry.register(store => next => action => {
         const createHandlersPromise = createHandlers(store);
         const result = next(action);
 
-        createHandlersPromise.then(handlers => {
-            if (initAnalytics(store, handlers)) {
+        createHandlersPromise.then(async handlers => {
+            if (await initAnalytics(store, handlers)) {
                 store.dispatch({
                     type: SET_INITIALIZED,
                     value: true

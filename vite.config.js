@@ -6,7 +6,6 @@ import fs from 'fs';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { fileURLToPath } from 'url';
-import { promisify } from 'util';
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import svgr from 'vite-plugin-svgr';
@@ -77,19 +76,31 @@ function deployLocalPlugin(options = {}) {
 
         async writeBundle() {
             try {
-                const execAsync = promisify(exec);
                 const scriptFullPath = path.resolve(__dirname, scriptPath);
 
                 if (fs.existsSync(scriptFullPath)) {
                     const stats = fs.statSync(scriptFullPath);
 
                     if (stats.isFile()) {
-                        const { stdout, stderr } = await execAsync(scriptFullPath, {
-                            timeout
+                        // Use Promise constructor with exec callback
+                        const {
+                            stdout: scriptStdout,
+                            stderr: scriptStderr
+                        } = await new Promise((resolve, reject) => {
+                            exec(scriptFullPath, { timeout }, (error, stdout, stderr) => {
+                                if (error) {
+                                    reject(error);
+                                } else {
+                                    resolve({
+                                        stdout,
+                                        stderr
+                                    });
+                                }
+                            });
                         });
 
-                        stdout && console.log('Deploy script output:', stdout);
-                        stderr && console.warn('Deploy script warnings:', stderr);
+                        scriptStdout && console.log('Deploy script output:', scriptStdout);
+                        scriptStderr && console.warn('Deploy script warnings:', scriptStderr);
                     }
                 }
             } catch (error) {
@@ -271,7 +282,31 @@ export default defineConfig(({ mode }) => {
                     'static/recommendedBrowsers.html',
                     'static/signout-callback.html',
                     'static/whiteboard.html'
-                ]
+                ],
+                output: {
+                    manualChunks: id => {
+                        // React and React-related libraries in one chunk
+                        if (id.includes('node_modules/react')
+                            || id.includes('node_modules/react-dom')
+                            || id.includes('node_modules/react-redux')
+                            || id.includes('node_modules/redux')
+                            || id.includes('node_modules/scheduler')) {
+                            return 'react-vendor';
+                        }
+
+                        // Media processing libraries
+                        if (id.includes('node_modules/@tensorflow')
+                            || id.includes('node_modules/@vladmandic')
+                            || id.includes('node_modules/@matrix-org/olm')) {
+                            return 'media-vendor';
+                        }
+
+                        // Large third-party libraries
+                        if (id.includes('node_modules/')) {
+                            return 'vendor';
+                        }
+                    }
+                }
             }
         }
     };
