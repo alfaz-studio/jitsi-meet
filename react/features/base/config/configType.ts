@@ -212,10 +212,13 @@ export interface IConfig {
         ignoreDomain?: string;
         preferSctp?: boolean;
     };
-    buttonsWithNotifyClick?: Array<ButtonsWithNotifyClick | {
-        key: ButtonsWithNotifyClick;
-        preventExecution: boolean;
-    }>;
+    buttonsWithNotifyClick?: Array<
+        | ButtonsWithNotifyClick
+        | {
+            key: ButtonsWithNotifyClick;
+            preventExecution: boolean;
+        }
+    >;
     callDisplayName?: string;
     callFlowsEnabled?: boolean;
     callHandle?: string;
@@ -502,10 +505,14 @@ export interface IConfig {
         mobileScreenshareCodec?: string;
         stunServers?: Array<{ urls: string; }>;
     };
-    participantMenuButtonsWithNotifyClick?: Array<string | ParticipantMenuButtonsWithNotifyClick | {
-        key: string | ParticipantMenuButtonsWithNotifyClick;
-        preventExecution: boolean;
-    }>;
+    participantMenuButtonsWithNotifyClick?: Array<
+        | string
+        | ParticipantMenuButtonsWithNotifyClick
+        | {
+            key: string | ParticipantMenuButtonsWithNotifyClick;
+            preventExecution: boolean;
+        }
+    >;
     participantsPane?: {
         enabled?: boolean;
         hideModeratorSettingsTab?: boolean;
@@ -634,6 +641,7 @@ export interface IConfig {
     };
     useHostPageLocalStorage?: boolean;
     useTurnUdp?: boolean;
+    userApiBaseUrl: string;
     videoQuality?: {
         codecPreferenceOrder?: Array<string>;
         maxBitratesVideo?: {

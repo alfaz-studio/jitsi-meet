@@ -48,3 +48,13 @@ export const SET_PREJOIN_DEVICE_ERRORS = 'SET_PREJOIN_DEVICE_ERRORS';
  * Action type to set the visibility of the prejoin page.
  */
 export const SET_PREJOIN_PAGE_VISIBILITY = 'SET_PREJOIN_PAGE_VISIBILITY';
+
+/**
+ * Action to indicate that the check for an active host has started.
+ */
+export const CHECK_ACTIVE_HOST_STARTED = 'CHECK_ACTIVE_HOST_STARTED';
+
+/**
+ * Action to store the result of the active host check.
+ */
+export const SET_IS_ACTIVE_HOST = 'SET_IS_ACTIVE_HOST';

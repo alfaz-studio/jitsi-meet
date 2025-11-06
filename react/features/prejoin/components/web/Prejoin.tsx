@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-no-bind */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useDispatch } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
@@ -20,8 +20,11 @@ import Input from '../../../base/ui/components/web/Input';
 import { BUTTON_TYPES } from '../../../base/ui/constants.any';
 import useInsecureRoomName from '../../../base/util/useInsecureRoomName';
 import { openDisplayNamePrompt } from '../../../display-name/actions';
+import { showNotification } from '../../../notifications/actions';
+import { NOTIFICATION_TIMEOUT_TYPE } from '../../../notifications/constants';
 import { isUnsafeRoomWarningEnabled } from '../../../prejoin/functions';
 import {
+    checkIsActiveHost,
     joinConference as joinConferenceAction,
     joinConferenceWithoutAudio as joinConferenceWithoutAudioAction,
     setJoinByPhoneDialogVisiblity as setJoinByPhoneDialogVisiblityAction
@@ -50,6 +53,8 @@ interface IProps {
      * If join by phone button should be visible.
      */
     hasJoinByPhoneButton: boolean;
+
+    isActiveHost: boolean;
 
     /**
      * Flag signaling if the display name is visible or not.
@@ -218,6 +223,7 @@ const useStyles = makeStyles()(theme => {
 const Prejoin = ({
     deviceStatusVisible,
     hasJoinByPhoneButton,
+    isActiveHost,
     isDisplayNameVisible,
     joinConference,
     joinConferenceWithoutAudio,
@@ -401,6 +407,19 @@ const Prejoin = ({
         }
     };
 
+    useEffect(() => {
+        dispatch(checkIsActiveHost());
+    }, [ dispatch ]);
+
+    useEffect(() => {
+        if (isActiveHost) {
+            dispatch(showNotification({
+                titleKey: 'prejoin.activeHostWarningTitle',
+                descriptionKey: 'prejoin.activeHostWarning'
+            }, NOTIFICATION_TIMEOUT_TYPE.LONG));
+        }
+    }, [ isActiveHost, dispatch ]);
+
     const extraJoinButtons = getExtraJoinButtons();
     let extraButtonsToRender = Object.values(extraJoinButtons).filter((val: any) =>
         !(prejoinConfig?.hideExtraJoinButtons || []).includes(val.key)
@@ -513,10 +532,12 @@ function mapStateToProps(state: IReduxState) {
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
+    const { isActiveHost } = state['features/prejoin'];
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
+        isActiveHost,
         isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
         joiningInProgress,
         name,

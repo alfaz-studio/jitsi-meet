@@ -23,11 +23,13 @@ import { showErrorNotification } from '../notifications/actions';
 import { INotificationProps } from '../notifications/types';
 
 import {
+    CHECK_ACTIVE_HOST_STARTED,
     PREJOIN_JOINING_IN_PROGRESS,
     SET_DEVICE_STATUS,
     SET_DIALOUT_COUNTRY,
     SET_DIALOUT_NUMBER,
     SET_DIALOUT_STATUS,
+    SET_IS_ACTIVE_HOST,
     SET_JOIN_BY_PHONE_DIALOG_VISIBLITY,
     SET_PREJOIN_DEVICE_ERRORS,
     SET_PREJOIN_PAGE_VISIBILITY,
@@ -514,5 +516,63 @@ export function setPrejoinPageVisibility(value: boolean) {
     return {
         type: SET_PREJOIN_PAGE_VISIBILITY,
         value
+    };
+}
+
+/**
+ * Checks if the current authenticated user is already an active host in another meeting.
+ *
+ * @returns {Function}
+ */
+export function checkIsActiveHost() {
+    return async (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+        console.log('checkIsActiveHost func');
+        const state = getState();
+        const {
+            isCheckingActiveHost
+        } = state['features/prejoin'];
+        const {
+            userApiBaseUrl
+        } = state['features/base/config'];
+
+        const { jwt } = state['features/base/jwt'];
+
+        if (isCheckingActiveHost || !userApiBaseUrl || !jwt) {
+            return;
+        }
+
+        dispatch({ type: CHECK_ACTIVE_HOST_STARTED });
+
+        // try {
+        const response = await fetch(`${userApiBaseUrl}/api/db-user`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        });
+
+        console.log(response);
+
+        if (response.ok) {
+            const data = await response.json();
+            const isActiveHost = data.user?.isActiveHost || false;
+
+            dispatch({
+                type: SET_IS_ACTIVE_HOST,
+                isActiveHost
+            });
+        } else {
+            // If the request fails, assume they are not an active host to avoid blocking them.
+            dispatch({
+                type: SET_IS_ACTIVE_HOST,
+                isActiveHost: false
+            });
+        }
+        // } catch (error) {
+        //     console.error('Failed to check active host status:', error);
+        //     dispatch({
+        //         type: SET_IS_ACTIVE_HOST,
+        //         isActiveHost: false
+        //     });
+        // }
     };
 }

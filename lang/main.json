@@ -993,6 +993,8 @@
     },
     "poweredby": "powered by",
     "prejoin": {
+        "activeHostWarning": "You are already hosting another meeting. You can join this meeting as a participant.",
+        "activeHostWarningTitle": "Already Hosting a Meeting",
         "audioAndVideoError": "Audio and video error:",
         "audioDeviceProblem": "There is a problem with your audio device",
         "audioOnlyError": "Audio error:",
