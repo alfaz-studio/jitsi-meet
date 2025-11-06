@@ -1,8 +1,10 @@
 import React, { Component, ReactElement, ReactNode } from 'react';
 import { WithTranslation } from 'react-i18next';
-import { GestureResponderEvent } from 'react-native';
 
 import { IStore } from '../../../app/types';
+
+// Web-compatible type (mobile GestureResponderEvent removed)
+type GestureResponderEvent = React.MouseEvent | React.TouchEvent;
 import { NOTIFY_CLICK_MODE } from '../../../toolbox/types';
 import { combineStyles } from '../../styles/functions.any';
 
