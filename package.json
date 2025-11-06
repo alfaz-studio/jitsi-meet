@@ -151,8 +151,6 @@
     "preview": "vite preview",
     "package": "vite build && tar -cjf \"jitsi-meet.tar.bz2\" -C \"build\" .",
     "lint": "eslint --ext .js,.ts,.tsx --max-warnings 0 . && tsc --noEmit",
-    "tsc:web": "tsc --noEmit --project tsconfig.web.json",
-    "lint:ci": "eslint --ext .js,.ts,.tsx --max-warnings 0 .",
     "lint:lang": "for file in lang/*.json; do npx --yes jsonlint -q $file || exit 1; done",
     "lang-sort": "./resources/lang-sort.sh",
     "lint-fix": "eslint --ext .js,.ts,.tsx --max-warnings 0 --fix .",

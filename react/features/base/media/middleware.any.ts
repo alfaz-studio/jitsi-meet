@@ -26,7 +26,6 @@ import { destroyLocalTracks } from '../tracks/actions.any';
 import {
     getCameraFacingMode,
     isLocalTrackMuted,
-    isLocalVideoTrackDesktop,
     setTrackMuted
 } from '../tracks/functions.any';
 import { ITrack } from '../tracks/types';

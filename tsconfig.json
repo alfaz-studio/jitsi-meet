@@ -16,13 +16,6 @@
         "moduleSuffixes": [".web", ""]
     },
     "exclude": [
-        "node_modules",
-        "react/features/share-room",
-        "**/mobile/*",
-        "**/native/*",
-        "**/*.native.ts",
-        "**/*.native.tsx",
-        "**/*.ios.ts",
-        "**/*.android.ts"
+        "node_modules"
     ]
 }

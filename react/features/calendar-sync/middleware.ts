@@ -1,11 +1,9 @@
-import { IStore } from '../app/types';
 import { SET_CONFIG } from '../base/config/actionTypes';
 import { ADD_KNOWN_DOMAINS } from '../base/known-domains/actionTypes';
 import MiddlewareRegistry from '../base/redux/MiddlewareRegistry';
 import { equals } from '../base/redux/functions';
 
 import { REFRESH_CALENDAR } from './actionTypes';
-import { setCalendarAuthorization } from './actions';
 import { _fetchCalendarEntries, isCalendarEnabled } from './functions';
 
 MiddlewareRegistry.register(store => next => action => {
