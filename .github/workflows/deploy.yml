@@ -6,6 +6,10 @@ on:
     pull_request:
         branches: [sonacove]
 
+permissions:
+    contents: read
+    pull-requests: write
+
 jobs:
     deploy:
         name: Cloudflare
@@ -14,7 +18,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
               with:
-                  submodules: true # Required for lib-jitsi-meet submodule
+                  submodules: recursive # Required for lib-jitsi-meet submodule and any nested submodules
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
@@ -22,11 +26,33 @@ jobs:
                   node-version-file: ".nvmrc"
                   cache: "npm"
 
+            - name: Build lib-jitsi-meet
+              run: |
+                  cd lib-jitsi-meet
+                  echo "📦 Installing dependencies for lib-jitsi-meet..."
+                  npm ci
+                  echo "🛠️ Building lib-jitsi-meet..."
+                  npm run build
+                  echo "✅ lib-jitsi-meet build complete"
+                  cd ..
+
             - name: Install dependencies
               run: npm ci
 
-            - name: Build and prepare files
-              run: node config/deploy-cf.mjs --skip-deps
+            - name: Build with Vite
+              run: npm run build
+
+            - name: Prepare deployment files
+              run: |
+                  # Move _redirects file to build root
+                  # Vite automatically copies public/_redirects to build/meet/_redirects
+                  # But Cloudflare expects it at build/_redirects (not build/meet/_redirects)
+                  if [ -f build/meet/_redirects ]; then
+                      cp build/meet/_redirects build/_redirects
+                      echo "✅ Copied _redirects to build root"
+                  else
+                      echo "⚠️ Warning: _redirects file not found in build output"
+                  fi
 
             - name: Deploy to Production
               if: github.ref == 'refs/heads/sonacove' && github.event_name == 'push'
@@ -34,7 +60,7 @@ jobs:
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-                  command: deploy -c config/wrangler.jsonc
+                  command: deploy
                   workingDirectory: "."
                   wranglerVersion: "3"
 
@@ -44,7 +70,7 @@ jobs:
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-                  command: versions upload -c config/wrangler.jsonc
+                  command: versions upload
                   workingDirectory: "."
                   wranglerVersion: "3"
               id: preview-deploy

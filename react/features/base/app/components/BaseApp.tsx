@@ -13,6 +13,7 @@ import MiddlewareRegistry from '../../redux/MiddlewareRegistry';
 import PersistenceRegistry from '../../redux/PersistenceRegistry';
 import ReducerRegistry from '../../redux/ReducerRegistry';
 import StateListenerRegistry from '../../redux/StateListenerRegistry';
+import MobileBackButton from '../../responsive-ui/mobileBackButtonUtils';
 import DuplicateTabManager from '../DuplicateTabManager';
 import { appWillMount, appWillUnmount } from '../actions';
 import logger from '../logger';
@@ -89,6 +90,8 @@ export default class BaseApp<P> extends Component<P, IState> {
             });
 
             await setStatePromise;
+
+            MobileBackButton.init();
 
             await this._extraInit();
         } catch (err) {

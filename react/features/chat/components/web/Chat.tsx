@@ -1,12 +1,14 @@
 import { throttle } from 'lodash-es';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
 import { IReduxState } from '../../../app/types';
+import { isMobileBrowser } from '../../../base/environment/utils';
 import { translate } from '../../../base/i18n/functions';
 import { IconInfo, IconMessage, IconShareDoc, IconSubtitles } from '../../../base/icons/svg';
 import { getLocalParticipant, getRemoteParticipants } from '../../../base/participants/functions';
+import MobileBackButton from '../../../base/responsive-ui/mobileBackButtonUtils';
 import Select from '../../../base/ui/components/web/Select';
 import Tabs from '../../../base/ui/components/web/Tabs';
 import { arePollsDisabled } from '../../../conference/functions.any';
@@ -236,6 +238,7 @@ const Chat = ({
     } = useSelector((state: IReduxState) => state['features/base/config']);
     const privateMessageRecipient = useSelector((state: IReduxState) => state['features/chat'].privateMessageRecipient);
     const participants = useSelector(getRemoteParticipants);
+    const backButtonId = useRef<string | null>(null);
 
     const options = useMemo(() => {
         const o = Array.from(participants?.values() || [])
@@ -362,6 +365,18 @@ const Chat = ({
     const onToggleChat = useCallback(() => {
         dispatch(toggleChat());
     }, []);
+
+
+    useEffect(() => {
+        if (_isOpen && isMobileBrowser()) {
+            backButtonId.current = MobileBackButton.push(onToggleChat);
+
+            return () => {
+                MobileBackButton.pop(backButtonId.current ?? undefined);
+                backButtonId.current = null;
+            };
+        }
+    }, [ _isOpen, onToggleChat ]);
 
     /**
      * Click handler for the chat sidenav.
