@@ -34,6 +34,11 @@ export interface IProps {
     _hangUp?: boolean;
 
     /**
+     * Whether the currect user is an active host in another meeting.
+     */
+    _isActiveHost?: boolean;
+
+    /**
      * Indicates whether the message that display name is required is shown.
      */
     _isDisplayNameRequiredActive: boolean;
@@ -451,6 +456,7 @@ export function _mapStateToProps(state: IReduxState) {
     const participantId = localParticipant?.id;
     const inviteEnabledFlag = getFeatureFlag(state, INVITE_ENABLED, true);
     const { disableInviteFunctions } = state['features/base/config'];
+    const { isActiveHost } = state['features/prejoin'];
     const { isDisplayNameRequiredError, knocking, passwordJoinFailed } = state['features/lobby'];
     const { iAmSipGateway } = state['features/base/config'];
     const { disableLobbyPassword } = getSecurityUiConfig(state);
@@ -463,6 +469,7 @@ export function _mapStateToProps(state: IReduxState) {
 
     return {
         _deviceStatusVisible: deviceStatusVisible,
+        _isActiveHost: isActiveHost,
         _isDisplayNameRequiredActive: Boolean(isDisplayNameRequiredError),
         _knocking: knocking,
         _lobbyChatMessages: messages,

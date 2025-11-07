@@ -91,7 +91,7 @@ class LobbyScreen extends AbstractLobbyScreen<IProps> {
      * @inheritdoc
      */
     override _renderJoining() {
-        const { _login, _isLobbyChatActive } = this.props;
+        const { _login, _isActiveHost, _isLobbyChatActive } = this.props;
 
         return (
             <div className = 'lobby-screen-content'>
@@ -103,7 +103,7 @@ class LobbyScreen extends AbstractLobbyScreen<IProps> {
                                 <LoadingIndicator size = 'large' />
                             </div>
                             <span className = 'joining-message'>
-                                { this.props.t(_login ? 'lobby.waitForModerator' : 'lobby.joiningMessage') }
+                                { this.props.t(_login && _isActiveHost ? 'user is already actve host' : _login ? 'lobby.waitForModerator' : 'lobby.joiningMessage') }
                             </span>
                         </>
                     )}
