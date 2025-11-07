@@ -6,6 +6,7 @@ import { IConfig } from "./react/features/base/config/configType";
 export {};
 
 declare global {
+    const __DEV__: boolean;
     const APP: {
         store: IStore;
         UI: any;

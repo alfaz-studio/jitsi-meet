@@ -1,7 +1,9 @@
 import React, { ComponentType, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GestureResponderEvent } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+
+// Web-compatible type (mobile GestureResponderEvent removed)
+type GestureResponderEvent = React.MouseEvent | React.TouchEvent;
 
 import { createPollEvent } from '../../analytics/AnalyticsEvents';
 import { sendAnalytics } from '../../analytics/functions';

@@ -1,4 +1,4 @@
-import { NetInfoCellularGeneration, NetInfoStateType } from '@react-native-community/netinfo';
+// Web-compatible net info (mobile-specific imports removed)
 
 import ReducerRegistry from '../redux/ReducerRegistry';
 import { assign } from '../redux/functions';
@@ -12,10 +12,10 @@ const DEFAULT_STATE = {
 
 export interface INetInfoState {
     _cleanup?: Function;
-    cellularGeneration?: NetInfoCellularGeneration;
+    cellularGeneration?: string;
     details?: Object;
     isOnline?: boolean;
-    networkType?: NetInfoStateType;
+    networkType?: string;
 }
 
 /**

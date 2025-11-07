@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GestureResponderEvent } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+
+// Web-compatible type (mobile GestureResponderEvent removed)
+type GestureResponderEvent = React.MouseEvent | React.TouchEvent;
 
 import { IReduxState } from '../app/types';
 import { getCurrentConference } from '../base/conference/functions';
