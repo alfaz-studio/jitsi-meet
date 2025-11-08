@@ -1,8 +1,17 @@
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureTwoParticipants } from '../../helpers/participants';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Kick', () => {
     it('joining the meeting', async () => {
-        await ensureTwoParticipants();
+        await ensureTwoParticipants({
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
+        });
 
         if (!await ctx.p1.isModerator()) {
             ctx.skipSuiteTests = true;
@@ -17,7 +26,12 @@ describe('Kick', () => {
                 p2p: {
                     enabled: true
                 }
-            }
+            },
+            skipWaitToJoin: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
         });
 
         await kickParticipant2AndCheck();

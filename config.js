@@ -91,13 +91,13 @@ var config = {
 
     testing: {
         // Allows the setting of a custom bandwidth value from the UI.
-        assumeBandwidth: !isProd,
+        assumeBandwidth: isProd ? undefined : true,
 
         // Enables use of getDisplayMedia in electron
         // electronUseGetDisplayMedia: false,
 
         // Enables AV1 codec for FF. Note: By default it is disabled.
-        enableAV1ForFF: !isProd,
+        enableAV1ForFF: isProd ? undefined : true,
 
         // Enables the use of the codec selection API supported by the browsers .
         enableCodecSelectionAPI: true,
@@ -107,11 +107,11 @@ var config = {
         // p2pTestMode: false,
 
         // Enables the test specific features consumed by jitsi-meet-torture
-        testMode: !isProd,
+        testMode: isProd ? undefined : true,
 
         // Disables the auto-play behavior of *all* newly created video element.
         // This is useful when the client runs on a host with limited resources.
-        // noAutoPlayVideo: false,
+        noAutoPlayVideo: isProd ? undefined : true,
 
         // Experiment: Whether to skip interim transcriptions.
         // skipInterimTranscriptions: false,
@@ -120,7 +120,7 @@ var config = {
         // dumpTranscript: false,
 
         // Log the audio levels.
-        debugAudioLevels: !isProd,
+        debugAudioLevels: isProd ? undefined : true,
 
         // Will replace ice candidates IPs with invalid ones in order to fail ice.
         // failICE: true,

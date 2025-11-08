@@ -1,42 +1,34 @@
 name: Test Preview Deployment
 
 on:
-  workflow_run:
-    workflows: [Deploy]
-    types: [completed]
-  workflow_dispatch: # Manual trigger for testing
+  workflow_call:
+    inputs:
+      preview_url:
+        description: 'Preview URL to test'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   test-preview:
     name: Run Tests on Preview
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
-    
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+
     steps:
-      - name: Debug workflow trigger
-        run: |
-          echo "Workflow triggered!"
-          echo "Event: ${{ github.event.workflow_run.event }}"
-          echo "Conclusion: ${{ github.event.workflow_run.conclusion }}"
-          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Workflow name: ${{ github.event.workflow_run.name }}"
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Download preview URL artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: preview-url
-          path: ./artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract preview URL
         id: extract-url
         run: |
-          PREVIEW_URL=$(cat ./artifacts/preview-url.txt)
+          PREVIEW_URL="${{ inputs.preview_url }}"
+
           echo "Preview URL: $PREVIEW_URL"
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
-          
+
           # Validate URL format
           if [[ "$PREVIEW_URL" =~ ^https?:// ]]; then
             echo "url_valid=true" >> $GITHUB_OUTPUT
@@ -50,7 +42,21 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
 
+      - name: Cache Chrome dependencies
+        id: cache-chrome-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives/
+            /usr/bin/chromium-browser
+            /usr/bin/chromedriver
+            /usr/bin/xvfb
+          key: chrome-deps-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            chrome-deps-${{ runner.os }}-
+
       - name: Install Chrome dependencies
+        if: steps.cache-chrome-deps.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -64,48 +70,98 @@ jobs:
       - name: Create test environment file
         if: steps.extract-url.outputs.url_valid == 'true'
         run: |
-          cat > tests/.env << EOF
-          # The base URL that will be used for the test
-          BASE_URL=${{ steps.extract-url.outputs.preview_url }}/meet/
+          set -euo pipefail
+          PREVIEW_URL="${{ steps.extract-url.outputs.preview_url }}"
+
+          # Ensure source env file exists
+          if [ ! -f tests/.env.test ]; then
+            echo "tests/.env.test not found" >&2
+            exit 1
+          fi
+
+          # Copy template to actual env file
+          cp tests/.env.test tests/.env
+
+          # Get workspace directory
+          WORKSPACE_DIR="${GITHUB_WORKSPACE:-$(pwd)}"
+
+          # Normalize URL (remove any trailing slash)
+          NORMALIZED_URL="${PREVIEW_URL%/}"
+
+          # Update BASE_URL in the env file; add it if not present
+          if grep -q '^BASE_URL=' tests/.env; then
+            sed -i "s|^BASE_URL=.*$|BASE_URL=${NORMALIZED_URL}/meet/|g" tests/.env
+          else
+            echo "BASE_URL=${NORMALIZED_URL}/meet/" >> tests/.env
+          fi
+
+          # Handle VIDEO_CAPTURE_FILE - replace GitHub Actions syntax and convert to absolute path
+          # Chrome requires absolute paths for --use-file-for-fake-video-capture
+          if grep -q '^VIDEO_CAPTURE_FILE=' tests/.env; then
+            # Extract the path value
+            VIDEO_PATH=$(grep '^VIDEO_CAPTURE_FILE=' tests/.env | cut -d'=' -f2- | xargs)
+            
+            # Replace GitHub Actions syntax ${{ github.workspace }} with actual workspace path
+            # Use perl for reliable replacement (available on most systems)
+            if command -v perl >/dev/null 2>&1; then
+              VIDEO_PATH=$(echo "$VIDEO_PATH" | perl -pe "s|\\\$\\{\\{ github\\.workspace \\}\\}|${WORKSPACE_DIR}|g" | perl -pe "s|\\\$\\{\\{github\\.workspace\\}\\}|${WORKSPACE_DIR}|g")
+            else
+              # Fallback: manual string replacement if perl not available
+              VIDEO_PATH=$(echo "$VIDEO_PATH" | sed 's|\${{ github.workspace }}|'"${WORKSPACE_DIR}"'|g' | sed 's|\${{github.workspace}}|'"${WORKSPACE_DIR}"'|g')
+            fi
+            
+            # Determine if path is absolute or relative
+            if [[ "$VIDEO_PATH" == /* ]]; then
+              # Already absolute, keep as is (may still need normalization)
+              ABS_VIDEO_PATH="$VIDEO_PATH"
+            else
+              # Convert relative path to absolute
+              ABS_VIDEO_PATH="${WORKSPACE_DIR}/${VIDEO_PATH}"
+            fi
+            
+            # Normalize the path (remove any ./ or resolve ..)
+            # Use realpath if available, otherwise construct manually
+            if command -v realpath >/dev/null 2>&1; then
+              ABS_VIDEO_PATH=$(realpath -m "$ABS_VIDEO_PATH" 2>/dev/null || echo "$ABS_VIDEO_PATH")
+            fi
+            
+            sed -i "s|^VIDEO_CAPTURE_FILE=.*$|VIDEO_CAPTURE_FILE=${ABS_VIDEO_PATH}|g" tests/.env
+            echo "Converted VIDEO_CAPTURE_FILE to absolute path: ${ABS_VIDEO_PATH}"
+          fi
+
+          echo "Created tests/.env with BASE_URL: ${NORMALIZED_URL}/meet/"
           
-          # Room name configuration
-          ROOM_NAME_PREFIX=test
-          ROOM_NAME_SUFFIX=grid
-          
-          # Browser configuration
-          HEADLESS=true
-          ALLOW_INSECURE_CERTS=true
-          
-          # Video capture file (absolute path)
-          VIDEO_CAPTURE_FILE=${{ github.workspace }}/tests/resources/fakeVideoStream.y4m
-          
-          # Test execution configuration
-          MAX_INSTANCES=1
-          
-          # Domain resolution
-          RESOLVER_RULES=MAP localhost 127.0.0.1
-          EOF
-          
-          echo "Created tests/.env with BASE_URL: ${{ steps.extract-url.outputs.preview_url }}/meet/"
+          # Print final .env file for debugging
+          echo ""
+          echo "=== Final generated tests/.env file ==="
+          cat tests/.env
+          echo "======================================="
 
       - name: Run tests
         if: steps.extract-url.outputs.url_valid == 'true'
+        id: run-tests
         continue-on-error: true
         run: |
           # Set display for headless Chrome
           export DISPLAY=:99
+          # Suppress XKEYBOARD warnings
+          export XKB_LOG_LEVEL=critical
           Xvfb :99 -screen 0 1280x1024x24 &
-          
+
           # Run tests
           npm run test
         env:
           DOTENV_CONFIG_PATH: tests/.env
+          XKB_LOG_LEVEL: critical
+          QT_X11_NO_MITSHM: 1
+          _JAVA_AWT_WM_NONREPARENTING: 1
 
       - name: Upload test results
         if: always()
+        id: upload-test-results
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ github.event.workflow_run.head_sha }}
+          name: test-results-${{ github.sha }}
           path: |
             test-results/
             !test-results/allure-results/
@@ -113,48 +169,108 @@ jobs:
 
       - name: Upload Allure report
         if: always()
+        id: upload-allure-report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-report-${{ github.event.workflow_run.head_sha }}
+          name: allure-report-${{ github.sha }}
           path: test-results/allure-report/
           retention-days: 30
 
-      - name: Parse test results and create summary
+      - name: Parse test results for PR comment
         if: always()
+        id: parse-results
         run: |
-          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.extract-url.outputs.url_valid }}" != "true" ]; then
-            echo "❌ **Status:** Failed - Invalid preview URL" >> $GITHUB_STEP_SUMMARY
-            echo "**Reason:** Could not extract valid preview URL from deployment" >> $GITHUB_STEP_SUMMARY
+          PREVIEW_URL="${{ steps.extract-url.outputs.preview_url }}"
+          URL_VALID="${{ steps.extract-url.outputs.url_valid }}"
+
+          if [ "$URL_VALID" != "true" ]; then
+            echo "test_status=failed" >> $GITHUB_OUTPUT
+            echo "test_reason=Invalid preview URL" >> $GITHUB_OUTPUT
+            echo "test_summary=❌ **Status:** Failed - Invalid preview URL" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
-          echo "✅ **Status:** Tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "**Preview URL:** ${{ steps.extract-url.outputs.preview_url }}/meet/" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Try to parse JUnit results if available
           if [ -f "test-results/results-0.xml" ]; then
             TESTS=$(grep -o 'tests="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "unknown")
             FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
             ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
-            
-            echo "**Test Results:**" >> $GITHUB_STEP_SUMMARY
-            echo "- Total Tests: $TESTS" >> $GITHUB_STEP_SUMMARY
-            echo "- Failures: $FAILURES" >> $GITHUB_STEP_SUMMARY
-            echo "- Errors: $ERRORS" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Determine overall test status
+            if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+              echo "test_status=failed" >> $GITHUB_OUTPUT
+              echo "test_summary=❌ **Status:** Tests failed" >> $GITHUB_OUTPUT
+            else
+              echo "test_status=passed" >> $GITHUB_OUTPUT
+              echo "test_summary=✅ **Status:** Tests passed" >> $GITHUB_OUTPUT
+            fi
+
+            echo "test_results=**Test Results:**" >> $GITHUB_OUTPUT
+            echo "test_results<<EOF" >> $GITHUB_OUTPUT
+            echo "- Total Tests: $TESTS" >> $GITHUB_OUTPUT
+            echo "- Failures: $FAILURES" >> $GITHUB_OUTPUT
+            echo "- Errors: $ERRORS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
-            echo "**Note:** Detailed test results not available" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            # Check if test step failed but no results file exists
+            if [ "${{ steps.run-tests.outcome }}" == "failure" ]; then
+              echo "test_status=failed" >> $GITHUB_OUTPUT
+              echo "test_summary=❌ **Status:** Tests failed (no detailed results available)" >> $GITHUB_OUTPUT
+              echo "test_results=**Note:** Test execution failed - no detailed results available" >> $GITHUB_OUTPUT
+            else
+              echo "test_status=unknown" >> $GITHUB_OUTPUT
+              echo "test_summary=⚠️ **Status:** Tests completed (detailed results not available)" >> $GITHUB_OUTPUT
+              echo "test_results=**Note:** Detailed test results not available" >> $GITHUB_OUTPUT
+            fi
           fi
-          
-          echo "**Artifacts:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Test Results: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- Allure Report: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Tests run against preview deployment: ${{ steps.extract-url.outputs.preview_url }}/meet/*" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update PR comment with test results
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: test-results
+          message: |
+            ## 🧪 Test Results
+
+            ${{ steps.parse-results.outputs.test_summary }}
+            **Preview URL:** ${{ steps.extract-url.outputs.url_valid == 'true' && format('[{0}/meet/testmeeting1]({0}/meet/testmeeting1)', steps.extract-url.outputs.preview_url) || 'Preview URL not available' }}
+
+            ${{ steps.parse-results.outputs.test_reason && format('**Reason:** {0}', steps.parse-results.outputs.test_reason) || '' }}
+
+            ${{ steps.parse-results.outputs.test_results }}
+
+            **Artifacts:**
+            - [📊 Test Results](${{ steps.upload-test-results.outputs.artifact-url }})
+            - [📈 Allure Report](${{ steps.upload-allure-report.outputs.artifact-url }})
+
+            ---
+            *This comment will be automatically updated when new commits are pushed.*
+
+      - name: Fail job if tests failed
+        if: always()
+        run: |
+          # Only fail if the test step actually failed
+          if [ "${{ steps.run-tests.outcome }}" == "failure" ]; then
+            # Check if we have test result files to determine the type of failure
+            if [ -f "test-results/results-0.xml" ]; then
+              FAILURES=$(grep -o 'failures="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
+              ERRORS=$(grep -o 'errors="[0-9]*"' test-results/results-0.xml | grep -o '[0-9]*' || echo "0")
+
+              if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+                echo "❌ Tests failed with $FAILURES failures and $ERRORS errors"
+                echo "This is a test failure - failing the job"
+                exit 1
+              else
+                echo "❌ Test execution failed but no test failures detected"
+                echo "This might be a setup issue - failing the job"
+                exit 1
+              fi
+            else
+              echo "❌ Test execution failed and no result files found"
+              echo "This is likely a setup failure - failing the job"
+              exit 1
+            fi
+          else
+            echo "✅ Test step completed successfully"
+          fi
 

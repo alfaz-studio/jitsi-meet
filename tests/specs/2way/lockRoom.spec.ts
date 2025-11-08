@@ -1,8 +1,12 @@
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant, ensureTwoParticipants, joinSecondParticipant } from '../../helpers/participants';
 import type SecurityDialog from '../../pageobjects/SecurityDialog';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 let roomKey: string;
 
+// NOTE: Skipped checks where p2 accesses the security dialog, as this is now a host/mod-only feature.
 /**
  * 1. Lock the room (make sure the image changes to locked)
  * 2. Join with a second browser/tab
@@ -14,7 +18,11 @@ let roomKey: string;
  * the padlock is unlocked.
  */
 describe('Lock Room', () => {
-    it('joining the meeting', () => ensureOneParticipant());
+    it('joining the meeting', () => ensureOneParticipant({
+        participantOptions: [
+            { participant: 'p1', status: 'active' }
+        ]
+    }));
 
     it('locks the room', () => participant1LockRoom());
 
@@ -41,12 +49,12 @@ describe('Lock Room', () => {
 
         await p2.waitToJoinMUC();
 
-        const p2SecurityDialog = p2.getSecurityDialog();
+        // const p2SecurityDialog = p2.getSecurityDialog();
 
-        await p2.getToolbar().clickSecurityButton();
-        await p2SecurityDialog.waitForDisplay();
+        // await p2.getToolbar().clickSecurityButton();
+        // await p2SecurityDialog.waitForDisplay();
 
-        await waitForRoomLockState(p2SecurityDialog, true);
+        // await waitForRoomLockState(p2SecurityDialog, true);
     });
 
     it('unlock room', async () => {
@@ -56,11 +64,16 @@ describe('Lock Room', () => {
         await participant1UnlockRoom();
     });
 
-    it('enter participant in unlocked room', async () => {
+    it.skip('enter participant in unlocked room', async () => {
         // Just enter the room and check that is not locked.
         // if we fail to unlock the room this one will detect it
         // as participant will fail joining
-        await ensureTwoParticipants();
+        await ensureTwoParticipants({
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'guest' }
+            ]
+        });
 
         const { p2 } = ctx;
         const p2SecurityDialog = p2.getSecurityDialog();
@@ -73,12 +86,14 @@ describe('Lock Room', () => {
         await p2SecurityDialog.clickCloseButton();
     });
 
-    it('update locked state while participants in room', async () => {
+    it.skip('update locked state while participants in room', async () => {
         // Both participants are in unlocked room, lock it and see whether the
         // change is reflected on the second participant icon.
         await participant1LockRoom();
 
-        const { p2 } = ctx;
+        const { p1, p2 } = ctx;
+
+        await p1.getFilmstrip().grantModerator(p2);
         const p2SecurityDialog = p2.getSecurityDialog();
 
         await p2.getToolbar().clickSecurityButton();
@@ -90,7 +105,7 @@ describe('Lock Room', () => {
 
         await waitForRoomLockState(p2SecurityDialog, false);
     });
-    it('unlock after participant enter wrong password', async () => {
+    it.skip('unlock after participant enter wrong password', async () => {
         // P1 locks the room. Participant tries to enter using wrong password.
         // P1 unlocks the room and Participant submits the password prompt with no password entered and
         // should enter of unlocked room.

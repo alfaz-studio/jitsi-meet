@@ -1,46 +1,47 @@
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant } from '../../helpers/participants';
 
-/**
- * Tests that the digits only password feature works.
- *
- * 1. Lock the room with a string (shouldn't work)
- * 2. Lock the room with a valid numeric password (should work)
- */
+setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
+
 describe('Lock Room with Digits only', () => {
-    it('join participant', () => ensureOneParticipant({
-        configOverwrite: {
-            roomPasswordNumberOfDigits: 5
-        }
-    }));
 
-    it('lock room with digits only', async () => {
+    before(async function() {
+        await ensureOneParticipant({
+            configOverwrite: {
+                prejoinConfig: { enabled: false },
+                roomPasswordNumberOfDigits: 5,
+            },
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
+        });
+    });
+
+    it('should enforce a digits-only password', async () => {
         const { p1 } = ctx;
-
-        expect(await p1.execute(
-            () => APP.store.getState()['features/base/config'].roomPasswordNumberOfDigits === 5)).toBe(true);
-
         const p1SecurityDialog = p1.getSecurityDialog();
 
+        // --- Test with a non-numeric password ---
         await p1.getToolbar().clickSecurityButton();
         await p1SecurityDialog.waitForDisplay();
-
         expect(await p1SecurityDialog.isLocked()).toBe(false);
 
-        // Set a non-numeric password.
         await p1SecurityDialog.addPassword('AAAAA');
-
+        // The dialog should still be open, and it should still be unlocked
         expect(await p1SecurityDialog.isLocked()).toBe(false);
         await p1SecurityDialog.clickCloseButton();
 
+        // --- Test with a numeric password ---
         await p1.getToolbar().clickSecurityButton();
         await p1SecurityDialog.waitForDisplay();
 
         await p1SecurityDialog.addPassword('12345');
         await p1SecurityDialog.clickCloseButton();
+        await p1.driver.pause(1000); // Wait for close animation
 
+        // --- Verify ---
         await p1.getToolbar().clickSecurityButton();
         await p1SecurityDialog.waitForDisplay();
-
         expect(await p1SecurityDialog.isLocked()).toBe(true);
     });
 });

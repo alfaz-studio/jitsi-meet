@@ -1,7 +1,10 @@
 import process from 'node:process';
 
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant } from '../../helpers/participants';
 import { cleanup, dialIn, isDialInEnabled, waitForAudioFromDialInParticipant } from '../helpers/DialIn';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
 
 describe('Dial-In', () => {
     it('join participant', async () => {
@@ -12,7 +15,12 @@ describe('Dial-In', () => {
             return;
         }
 
-        await ensureOneParticipant({ preferGenerateToken: true });
+        await ensureOneParticipant({
+            preferGenerateToken: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
+        });
 
         // check dial-in is enabled
         if (!await isDialInEnabled(ctx.p1)) {

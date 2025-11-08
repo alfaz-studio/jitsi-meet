@@ -1,14 +1,22 @@
 import type { Participant } from '../../helpers/Participant';
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureTwoParticipants } from '../../helpers/participants';
+
 
 const MY_TEST_SUBJECT = 'My Test Subject';
 const SUBJECT_XPATH = '//div[starts-with(@class, "subject-text")]';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Subject', () => {
     it('joining the meeting', () => ensureTwoParticipants({
         configOverwrite: {
             subject: MY_TEST_SUBJECT
-        }
+        },
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
     }));
 
     it('check', async () => {

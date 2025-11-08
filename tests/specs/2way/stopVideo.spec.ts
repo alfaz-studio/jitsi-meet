@@ -1,9 +1,22 @@
-import { ensureTwoParticipants, muteVideoAndCheck, unmuteVideoAndCheck } from '../../helpers/participants';
+import { setTestProperties } from '../../helpers/TestProperties';
+import { ensureTwoParticipants, joinSecondParticipant, muteVideoAndCheck, unmuteAudioAndCheck, unmuteVideoAndCheck } from '../../helpers/participants';
+
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
 describe('Stop video', () => {
-    it('joining the meeting', () => ensureTwoParticipants());
+    it('joining the meeting', () => ensureTwoParticipants({
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
+    }));
 
-    it('stop video and check', () => muteVideoAndCheck(ctx.p1, ctx.p2));
+    it('stop video and check', async () => {
+        await unmuteAudioAndCheck(ctx.p1, ctx.p2);
+        await unmuteAudioAndCheck(ctx.p2, ctx.p1);
+
+        muteVideoAndCheck(ctx.p1, ctx.p2);
+    });
 
     it('start video and check', () => unmuteVideoAndCheck(ctx.p1, ctx.p2));
 
@@ -19,7 +32,9 @@ describe('Stop video', () => {
         expect(largeVideoId).toBe(await ctx.p1.getLargeVideo().getId());
     });
 
-    it('stop video on participant and check', () => muteVideoAndCheck(ctx.p2, ctx.p1));
+    it('stop video on participant and check', async () => {
+        muteVideoAndCheck(ctx.p2, ctx.p1);
+    });
 
     it('start video on participant and check', () => unmuteVideoAndCheck(ctx.p2, ctx.p1));
 
@@ -30,7 +45,12 @@ describe('Stop video', () => {
 
         await p1.getToolbar().clickVideoMuteButton();
 
-        await ensureTwoParticipants();
+        await joinSecondParticipant({
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p2', status: 'guest' },
+            ],
+        });
 
         const { p2 } = ctx;
 

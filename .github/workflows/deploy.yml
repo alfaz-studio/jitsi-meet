@@ -14,6 +14,8 @@ jobs:
     deploy:
         name: Cloudflare
         runs-on: ubuntu-latest
+        outputs:
+            preview-url: ${{ steps.preview-deploy.outputs.deployment-url }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -75,23 +77,6 @@ jobs:
                   wranglerVersion: "3"
               id: preview-deploy
 
-            - name: Save preview URL for test workflow
-              if: github.event_name == 'pull_request'
-              run: |
-                  PREVIEW_URL="${{ steps.preview-deploy.outputs.deployment-url }}"
-                  if [[ -n "$PREVIEW_URL" ]]; then
-                      echo "$PREVIEW_URL" > preview-url.txt
-                  else
-                      echo "Preview deployment created but URL not available" > preview-url.txt
-                  fi
-
-            - name: Upload preview URL artifact
-              if: github.event_name == 'pull_request'
-              uses: actions/upload-artifact@v4
-              with:
-                  name: preview-url
-                  path: preview-url.txt
-                  retention-days: 1
 
             - name: Add deployment summary
               if: always()
@@ -128,3 +113,11 @@ jobs:
 
                       ---
                       *This comment will be automatically updated when new commits are pushed.*
+
+    test-preview:
+        name: Run Tests
+        needs: deploy
+        if: github.event_name == 'pull_request'
+        uses: ./.github/workflows/test-preview.yml
+        with:
+            preview_url: ${{ needs.deploy.outputs.preview-url }}

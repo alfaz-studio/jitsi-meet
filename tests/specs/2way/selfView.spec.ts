@@ -1,8 +1,16 @@
 import type { Participant } from '../../helpers/Participant';
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('Self view', () => {
-    it('joining the meeting', () => ensureTwoParticipants());
+    it('joining the meeting', () => ensureTwoParticipants({
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'guest' }
+        ]
+    }));
 
     it('hide from menu', async () => {
         const { p1 } = ctx;

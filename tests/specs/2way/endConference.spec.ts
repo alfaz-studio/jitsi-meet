@@ -1,7 +1,15 @@
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
 describe('End Conference', () => {
-    it('joining the meeting', () => ensureTwoParticipants());
+    it('joining the meeting', () => ensureTwoParticipants({
+        participantOptions: [
+            { participant: 'p1', status: 'active' },
+            { participant: 'p2', status: 'trialing' }
+        ]
+    }));
 
     it('hangup call and check', async () => {
         const { p1 } = ctx;

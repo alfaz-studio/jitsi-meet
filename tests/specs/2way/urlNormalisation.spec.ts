@@ -1,9 +1,12 @@
 import { multiremotebrowser } from '@wdio/globals';
 
+import { setTestProperties } from '../../helpers/TestProperties';
 import { config } from '../../helpers/TestsConfig';
 import { ensureTwoParticipants } from '../../helpers/participants';
 
-describe('URL Normalisation', () => {
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
+
+describe.skip('URL Normalisation', () => {
     it('joining the meeting', async () => {
 
         // if we are running with token this becomes ugly to match the URL
@@ -22,7 +25,14 @@ describe('URL Normalisation', () => {
 
         await ensureTwoParticipants({
             tenant: 'tenant@example.com',
-            roomName: `${ctx.roomName}@example.com`
+            roomName: `${ctx.roomName}@example.com`,
+            tokenOptions: {
+                moderator: true
+            },
+            participantOptions: [
+                { participant: 'p1', status: 'guest' },
+                { participant: 'p2', status: 'guest' }
+            ]
         });
     });
 

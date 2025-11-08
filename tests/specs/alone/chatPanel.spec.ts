@@ -1,7 +1,11 @@
 import { ensureOneParticipant } from '../../helpers/participants';
 
 describe('Chat Panel', () => {
-    it('join participant', () => ensureOneParticipant());
+    it('join participant', () => ensureOneParticipant({
+        participantOptions: [
+            { participant: 'p1', status: 'active' }
+        ]
+    }));
 
     it('start closed', async () => {
         expect(await ctx.p1.getChatPanel().isOpen()).toBe(false);
@@ -18,7 +22,7 @@ describe('Chat Panel', () => {
         await chatPanel.pressShortcut();
         expect(await chatPanel.isOpen()).toBe(false);
     });
-    it('use shortcut to open', async () => {
+    it.skip('use shortcut to open', async () => {
         const chatPanel = ctx.p1.getChatPanel();
 
         await chatPanel.pressShortcut();

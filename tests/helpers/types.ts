@@ -71,7 +71,30 @@ export type IParticipantJoinOptions = {
      * An optional tenant to use. If provided it overrides the default.
      */
     tenant?: string;
+
+    /**
+     * If true, the participant will join using the ACTIVE user credentials.
+     */
+    useActiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the INACTIVE user credentials.
+     */
+    useInactiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the TRIALING user credentials.
+     */
+    useTrialingToken?: boolean;
 };
+
+export type ParticipantStatus = 'active' | 'trialing' | 'inactive' | 'guest';
+
+export interface IParticipantState {
+    participant: 'p1' | 'p2' | 'p3' | 'p4';
+    status: ParticipantStatus;
+}
+
 
 export type IJoinOptions = {
 
@@ -79,6 +102,19 @@ export type IJoinOptions = {
      * Config overwrites to pass to IParticipantJoinOptions.
      */
     configOverwrite?: IConfig;
+
+    /**
+     * An array specifying the desired status for each participant joining the meeting.
+     * This provides fine-grained control over multi-user test setups.
+     * If not provided, sensible defaults will be used (e.g., p1 active, p2 guest).
+     *
+     * @example
+     * participantOptions: [
+     *   { participant: 'p1', status: 'active' },
+     *   { participant: 'p2', status: 'trialing' }
+     * ]
+     */
+    participantOptions?: IParticipantState[];
 
     /**
      * When joining the first participant and jwt singing material is available and a provided token
@@ -120,4 +156,19 @@ export type IJoinOptions = {
      * Options used when generating a token.
      */
     tokenOptions?: ITokenOptions;
+
+    /**
+     * If true, the participant will join using the ACTIVE user credentials.
+     */
+    useActiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the INACTIVE user credentials.
+     */
+    useInactiveToken?: boolean;
+
+    /**
+     * If true, the participant will join using the TRIALING user credentials.
+     */
+    useTrialingToken?: boolean;
 };

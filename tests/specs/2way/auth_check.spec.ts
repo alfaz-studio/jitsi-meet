@@ -1,94 +1,126 @@
-/*
-Validates the meeting creation authentication flow.
-*/
-
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant, ensureTwoParticipants, joinFirstParticipant } from '../../helpers/participants';
 import WaitingForModeratorDialog from '../../pageobjects/WaitingForModeratorDialog';
 
-describe('Auth Check', () => {
+setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
-    it('p1 tries to join as guest, wait for host dialog shown', async () => {
-        await joinFirstParticipant(ctx, {
-            configOverwrite: {
-                prejoinConfig: {
-                    enabled: true,
-                },
-            },
-            skipWaitToJoin: true,
-            skipInMeetingChecks: true,
-            skipFirstModerator: true
-        });
+describe('Authentication Rules', () => {
 
-        const p1PreJoinScreen = ctx.p1.getPreJoinScreen();
-
-        await p1PreJoinScreen.waitForLoading();
-        const joinButton = p1PreJoinScreen.getJoinButton();
-
-        await joinButton.waitForDisplayed();
-        await joinButton.click();
-
-        const WaitForModDialog = new WaitingForModeratorDialog(ctx.p1);
-
-        await WaitForModDialog.waitForOpen();
-
-        await ctx.p1.hangup();
+    afterEach(async () => {
+        await ctx.p1?.hangup();
+        await ctx.p2?.hangup();
     });
 
-    it('p1 joins as unsubbed user, trial expired message with wait for host shown', async () => {
-        await joinFirstParticipant(ctx, {
-            configOverwrite: {
-                prejoinConfig: {
-                    enabled: true,
-                },
-            },
-            skipWaitToJoin: true,
+
+    // --- SCENARIO 1: Can a user START a meeting? ---
+
+    it('should allow an ACTIVE user to start a new meeting', async () => {
+        console.log('[TEST] Verifying an ACTIVE user can start a meeting...');
+        await ensureOneParticipant({
             skipInMeetingChecks: true,
-            moderator: false
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
         });
-
-        const p1PreJoinScreen = ctx.p1.getPreJoinScreen();
-
-        await p1PreJoinScreen.waitForLoading();
-        const joinButton = p1PreJoinScreen.getJoinButton();
-
-        await joinButton.waitForDisplayed();
-        await joinButton.click();
-        // TODO: define the error message that should appear.
-        // const TRIAL_EXPIRED = '';
-        // const error = ctx.p1.driver.$(`[data-testid="${TRIAL_EXPIRED}"]`);
-        // await error.waitForDisplayed();
-
-        const WaitForModDialog = new WaitingForModeratorDialog(ctx.p1);
-
-        await WaitForModDialog.waitForOpen();
-
-        await ctx.p1.hangup();
-    });
-
-    it('p1 joins as subbed, successfully', async () => {
-        await ensureOneParticipant(ctx);
-
         expect(await ctx.p1.isInMuc()).toBe(true);
+        console.log('[SUCCESS] Active user successfully started a meeting.');
     });
 
-    it('p2 joins as guest, successfully', async () => {
-        await ensureTwoParticipants(ctx);
+    it('should allow a TRIALING user to start a new meeting', async () => {
+        console.log('[TEST] Verifying a TRIALING user can start a meeting...');
+        await ensureOneParticipant({
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'trialing' }
+            ]
+        });
+        expect(await ctx.p1.isInMuc()).toBe(true);
+        console.log('[SUCCESS] Trialing user successfully started a meeting.');
+    });
 
+    it('should place an INACTIVE user in the lobby when they are the first to join', async () => {
+        console.log('[TEST] Verifying an INACTIVE user is put in the lobby...');
+        await joinFirstParticipant({
+            configOverwrite: { prejoinConfig: { enabled: true } },
+            skipWaitToJoin: true,
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'inactive' }
+            ]
+        });
+
+        const { p1 } = ctx;
+        const p1PreJoinScreen = p1.getPreJoinScreen();
+
+        await p1PreJoinScreen.waitForLoading();
+        await p1PreJoinScreen.getJoinButton().click();
+
+        const waitForModDialog = new WaitingForModeratorDialog(p1);
+
+        await waitForModDialog.waitForOpen();
+        expect(await p1.isInMuc()).toBe(false);
+        console.log('[SUCCESS] Inactive user was correctly placed in the lobby.');
+    });
+
+    it('should place a GUEST user in the lobby when they are the first to join', async () => {
+        console.log('[TEST] Verifying a GUEST user is put in the lobby...');
+        await joinFirstParticipant({
+            configOverwrite: { prejoinConfig: { enabled: true } },
+            skipWaitToJoin: true,
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'guest' }
+            ]
+        });
+
+        const { p1 } = ctx;
+        const p1PreJoinScreen = p1.getPreJoinScreen();
+
+        await p1PreJoinScreen.waitForLoading();
+        await p1PreJoinScreen.getJoinButton().click();
+
+        const waitForModDialog = new WaitingForModeratorDialog(p1);
+
+        await waitForModDialog.waitForOpen();
+        expect(await p1.isInMuc()).toBe(false);
+        console.log('[SUCCESS] Guest user was correctly placed in the lobby.');
+    });
+
+    // --- SCENARIO 2: Can a user JOIN a meeting already started by a host? ---
+
+    it('should allow another ACTIVE user to join a meeting started by a host', async () => {
+        await ensureTwoParticipants({
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'active' }
+            ]
+        });
         expect(await ctx.p2.isInMuc()).toBe(true);
-        await ctx.p2.hangup();
+        console.log('[SUCCESS] Second active user joined successfully.');
     });
 
-    it('p2 joins as unsubbed user, successfully', async () => {
-        await ensureTwoParticipants(ctx, { preferGenerateToken: true, moderator: false });
-
+    it('should allow a TRIALING user to join a meeting started by a host', async () => {
+        await ensureTwoParticipants({
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'trialing' }
+            ]
+        });
         expect(await ctx.p2.isInMuc()).toBe(true);
-        await ctx.p2.hangup();
+        console.log('[SUCCESS] Trialing user joined successfully.');
     });
 
-    it('p2 joins as subbed user, successfully', async () => {
-        await ensureTwoParticipants(ctx, { preferGenerateToken: true });
-
+    it('should allow an INACTIVE user to join a meeting started by a host', async () => {
+        await ensureTwoParticipants({
+            skipInMeetingChecks: true,
+            participantOptions: [
+                { participant: 'p1', status: 'active' },
+                { participant: 'p2', status: 'inactive' }
+            ]
+        });
         expect(await ctx.p2.isInMuc()).toBe(true);
+        console.log('[SUCCESS] Inactive user joined successfully.');
     });
-
 });

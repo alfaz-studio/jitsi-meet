@@ -1,9 +1,22 @@
+import { setTestProperties } from '../../helpers/TestProperties';
 import { ensureOneParticipant } from '../../helpers/participants';
 
-describe('Video Layout', () => {
-    it('join participant', () => ensureOneParticipant());
+setTestProperties(__filename, { usesBrowsers: [ 'p1' ] });
 
-    it('check', async () => {
+describe('Video Layout', () => {
+
+    before(async function() {
+        await ensureOneParticipant({
+            configOverwrite: {
+                prejoinConfig: { enabled: false }
+            },
+            participantOptions: [
+                { participant: 'p1', status: 'active' }
+            ]
+        });
+    });
+
+    it('should have the large video container fill the available space', async () => {
         const { p1 } = ctx;
 
         const innerWidth = parseInt(await p1.execute('return window.innerWidth'), 10);
