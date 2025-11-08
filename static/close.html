@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--#include virtual="/base.html" -->
     <!--#include virtual="/plugin.head.html" -->
-    <link rel="stylesheet" href="../css/main.scss" />
+    <link href="../css/tailwind.css" rel="stylesheet">
     <!--#include virtual="/title.html" -->
     <script><!--#include virtual="/interface_config.js" --></script>
     <script src="./close.js" type="module"></script>
 </head>
-<body>
-<div class="redirectPageMessage">
-    <div class="thanks-msg">
-        <p>Thank you for your feedback!</p>
+<body class="bg-[#040404] text-[#F1F1F1] m-0 w-full h-full overflow-hidden font-sans">
+<div class="w-[30%] mx-auto mt-[20%] text-center text-2xl">
+    <div class="border-b border-white px-[30px]">
+        <p class="my-[30px] text-2xl leading-6">Thank you for your feedback!</p>
     </div>
-    <div class="hint-msg">
-        <p>
+    <div>
+        <p class="my-[26px] font-semibold text-base leading-[1.125rem]">
             <span id="hintQuestion">Did you know?</span>
-            <span class="hint-msg__holder" id="hintMessage"></span>
+            <span class="font-extralight" id="hintMessage"></span>
         </p>
-        <div class="happy-software"></div>
+        <div class="w-[120px] h-[86px] mx-auto bg-transparent"></div>
     </div>
 </div>
 </body>

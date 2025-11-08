@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--#include virtual="/base.html" -->
     <!--#include virtual="/plugin.head.html" -->
-    <link rel="stylesheet" href="../css/main.scss" />
+    <link href="../css/tailwind.css" rel="stylesheet">
     <!--#include virtual="/title.html" -->
 </head>
-<body>
-    <div class = 'unsupported-desktop-browser'>
-        <h2 class = 'unsupported-desktop-browser__title'>
+<body class="bg-[#040404] text-[#F1F1F1] m-0 w-full h-full overflow-hidden font-sans">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 block text-center">
+        <h2 class="text-white font-light text-2xl tracking-wide">
             It looks like you're using a browser we don't fully support.
         </h2>
-        <p class ='unsupported-desktop-browser__description'>
+        <p class="text-[rgba(255,255,255,0.7)] text-xl font-light tracking-wide mt-4">
             We recommend to try with the latest version of&nbsp;
             <a
-                className = 'unsupported-desktop-browser__link'
-                href = 'https://www.google.com/chrome/' >Chrome</a>&nbsp;or&nbsp;
+                className="text-[#489afe] transition-colors duration-100 ease-out hover:text-[#287ade] hover:cursor-pointer hover:no-underline"
+                href="https://www.google.com/chrome/">Chrome</a>&nbsp;or&nbsp;
             <a
-                class = 'unsupported-desktop-browser__link'
-                href = 'https://www.chromium.org/'>Chromium</a>
+                class="text-[#489afe] transition-colors duration-100 ease-out hover:text-[#287ade] hover:cursor-pointer hover:no-underline"
+                href="https://www.chromium.org/">Chromium</a>
         </p>
     </div>
 </body>

@@ -1,4 +1,6 @@
 import vitePluginSsi from '@catfyrr/vite-plugin-ssi';
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import tailwindcss from '@tailwindcss/vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import react from '@vitejs/plugin-react';
 import { exec } from 'child_process';
@@ -57,7 +59,6 @@ const STATIC_FILES = [
 const LIB_FILES = [
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets',
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets-dev',
-    'lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
     'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 
@@ -119,6 +120,11 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [
             vitePluginSsi(),
+            tailwindcss(),
+            paraglideVitePlugin({
+                project: './lang/project.inlang',
+                outdir: './lang/paraglide'
+            }),
             basicSsl({
                 name: 'jitsi-meet',
                 domains: [ 'localhost', '127.0.0.1', '::1' ],
@@ -219,13 +225,13 @@ export default defineConfig(({ mode }) => {
         optimizeDeps: {
             include: [
                 '@tensorflow/tfjs-backend-wasm',
-                '@vladmandic/human'
+                '@vladmandic/human',
+                'lib-jitsi-meet/index.browser.ts'
             ]
         },
 
         resolve: {
             alias: {
-                'focus-visible': 'focus-visible/dist/focus-visible.min.js',
                 '@giphy/js-analytics': path.resolve(__dirname, 'giphy-analytics-stub.js')
             },
             extensions: [
@@ -282,31 +288,7 @@ export default defineConfig(({ mode }) => {
                     'static/recommendedBrowsers.html',
                     'static/signout-callback.html',
                     'static/whiteboard.html'
-                ],
-                output: {
-                    manualChunks: id => {
-                        // React and React-related libraries in one chunk
-                        if (id.includes('node_modules/react')
-                            || id.includes('node_modules/react-dom')
-                            || id.includes('node_modules/react-redux')
-                            || id.includes('node_modules/redux')
-                            || id.includes('node_modules/scheduler')) {
-                            return 'react-vendor';
-                        }
-
-                        // Media processing libraries
-                        if (id.includes('node_modules/@tensorflow')
-                            || id.includes('node_modules/@vladmandic')
-                            || id.includes('node_modules/@matrix-org/olm')) {
-                            return 'media-vendor';
-                        }
-
-                        // Large third-party libraries
-                        if (id.includes('node_modules/')) {
-                            return 'vendor';
-                        }
-                    }
-                }
+                ]
             }
         }
     };
