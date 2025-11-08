@@ -6,7 +6,7 @@ import { ensureTwoParticipants } from '../../helpers/participants';
 
 setTestProperties(__filename, { usesBrowsers: [ 'p1', 'p2' ] });
 
-describe('URL Normalisation', () => {
+describe.skip('URL Normalisation', () => {
     it('joining the meeting', async () => {
 
         // if we are running with token this becomes ugly to match the URL

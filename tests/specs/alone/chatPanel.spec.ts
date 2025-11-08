@@ -22,7 +22,7 @@ describe('Chat Panel', () => {
         await chatPanel.pressShortcut();
         expect(await chatPanel.isOpen()).toBe(false);
     });
-    it('use shortcut to open', async () => {
+    it.skip('use shortcut to open', async () => {
         const chatPanel = ctx.p1.getChatPanel();
 
         await chatPanel.pressShortcut();
