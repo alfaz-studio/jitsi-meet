@@ -198,10 +198,10 @@ export default defineConfig(({ mode }) => {
             'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
 
             // Define APP and other globals
-            'APP': 'window.APP',
-            'JitsiMeetJS': 'window.JitsiMeetJS',
-            'config': 'window.config',
-            'interfaceConfig': 'window.interfaceConfig'
+            'APP': '(typeof window !== "undefined" ? window.APP : undefined)',
+            'JitsiMeetJS': '(typeof window !== "undefined" ? window.JitsiMeetJS : undefined)',
+            'config': '(typeof window !== "undefined" ? window.config : undefined)',
+            'interfaceConfig': '(typeof window !== "undefined" ? window.interfaceConfig : undefined)'
         },
 
         // Pre-optimize dependencies to prevent reload on first meeting join
