@@ -820,7 +820,7 @@ var config = {
     /**
      * The base URL for the Sonacove API.
      */
-    userApiBaseUrl: isProd ? 'https://sonacove.com' : 'https://6e03245d-sonacove.catfurr.workers.dev',
+    userApiBaseUrl: isProd ? 'https://sonacove.com' : 'http://localhost:4321',
 
     // Configs for prejoin page.
     prejoinConfig: {

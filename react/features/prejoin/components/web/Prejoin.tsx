@@ -24,9 +24,9 @@ import { showNotification } from '../../../notifications/actions';
 import { NOTIFICATION_TIMEOUT_TYPE } from '../../../notifications/constants';
 import { isUnsafeRoomWarningEnabled } from '../../../prejoin/functions';
 import {
-    checkIsActiveHost,
     joinConference as joinConferenceAction,
     joinConferenceWithoutAudio as joinConferenceWithoutAudioAction,
+    performPrejoinChecks,
     setJoinByPhoneDialogVisiblity as setJoinByPhoneDialogVisiblityAction
 } from '../../actions.web';
 import {
@@ -54,6 +54,9 @@ interface IProps {
      */
     hasJoinByPhoneButton: boolean;
 
+    /**
+     * Whether the currect user is an active host in another meeting.
+     */
     isActiveHost: boolean;
 
     /**
@@ -224,8 +227,7 @@ const Prejoin = ({
     deviceStatusVisible,
     hasJoinByPhoneButton,
     isActiveHost,
-    isDisplayNameVisible,
-    joinConference,
+    isDisplayNameVisible,    joinConference,
     joinConferenceWithoutAudio,
     joiningInProgress,
     name,
@@ -408,8 +410,11 @@ const Prejoin = ({
     };
 
     useEffect(() => {
-        dispatch(checkIsActiveHost());
-    }, [ dispatch ]);
+        if (room) {
+            dispatch(performPrejoinChecks());
+        }
+    }, [ room, dispatch ]);
+
 
     useEffect(() => {
         if (isActiveHost) {
@@ -532,13 +537,11 @@ function mapStateToProps(state: IReduxState) {
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
-    const { isActiveHost } = state['features/prejoin'];
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
-        isActiveHost,
-        isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
+        isActiveHost: state['features/prejoin'].isActiveHost,        isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
         joiningInProgress,
         name,
         participantId,

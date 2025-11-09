@@ -994,7 +994,7 @@
     "poweredby": "powered by",
     "prejoin": {
         "activeHostWarning": "You are already hosting another meeting. You can join this meeting as a participant.",
-        "activeHostWarningTitle": "Already Hosting a Meeting",
+        "activeHostWarningTitle": "Already Hosting",
         "audioAndVideoError": "Audio and video error:",
         "audioDeviceProblem": "There is a problem with your audio device",
         "audioOnlyError": "Audio error:",
@@ -1189,6 +1189,8 @@
         "premeeting": "Pre meeting",
         "proceedAnyway": "Proceed anyway",
         "recordingWarning": "Other participants may be recording this call",
+        "roomBookedWarning": "You can join and wait in the lobby for the host to let you in.",
+        "roomBookedWarningTitle": "This room is currently booked",
         "screenSharingError": "Screen sharing error:",
         "startWithPhone": "Start with phone audio",
         "unsafeRoomConsent": "I understand the risks, I want to join the meeting",

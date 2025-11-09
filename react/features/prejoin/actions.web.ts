@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { IStore } from '../app/types';
+import { IReduxState, IStore } from '../app/types';
 import { LOGIN } from '../authentication/actionTypes';
 import DuplicateTabManager from '../base/app/DuplicateTabManager';
 import { updateConfig } from '../base/config/actions';
@@ -24,6 +24,7 @@ import { INotificationProps } from '../notifications/types';
 
 import {
     CHECK_ACTIVE_HOST_STARTED,
+    CHECK_ROOM_AVAILABILITY_STARTED,
     PREJOIN_JOINING_IN_PROGRESS,
     SET_DEVICE_STATUS,
     SET_DIALOUT_COUNTRY,
@@ -33,6 +34,7 @@ import {
     SET_JOIN_BY_PHONE_DIALOG_VISIBLITY,
     SET_PREJOIN_DEVICE_ERRORS,
     SET_PREJOIN_PAGE_VISIBILITY,
+    SET_ROOM_AVAILABILITY,
     SET_SKIP_PREJOIN_RELOAD
 } from './actionTypes';
 import {
@@ -520,59 +522,93 @@ export function setPrejoinPageVisibility(value: boolean) {
 }
 
 /**
- * Checks if the current authenticated user is already an active host in another meeting.
+ * Performs all necessary pre-join checks for an authenticated user, including
+ * active host status and room availability.
  *
  * @returns {Function}
  */
-export function checkIsActiveHost() {
-    return async (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
-        console.log('checkIsActiveHost func');
+export function performPrejoinChecks() {
+    return async (dispatch: IStore['dispatch'], getState: () => IReduxState) => {
         const state = getState();
-        const {
-            isCheckingActiveHost
-        } = state['features/prejoin'];
-        const {
-            userApiBaseUrl
-        } = state['features/base/config'];
+        const { isCheckingActiveHost, isCheckingRoomAvailability } = state['features/prejoin'];
+        const { userApiBaseUrl } = state['features/base/config'];
+        const roomName = state['features/base/conference'].room;
+        const jwt = state['features/base/jwt'].jwt;
 
-        const { jwt } = state['features/base/jwt'];
-
-        if (isCheckingActiveHost || !userApiBaseUrl || !jwt) {
+        // Exit if checks are already running, or if we don't have the required info.
+        if (isCheckingActiveHost || isCheckingRoomAvailability || !userApiBaseUrl || !jwt || !roomName) {
             return;
         }
 
+        // ---== STEP 1: Fetch the User and Room Data in Parallel ==---
+        // We can make both API calls at the same time to be more efficient.
+
         dispatch({ type: CHECK_ACTIVE_HOST_STARTED });
+        dispatch({ type: CHECK_ROOM_AVAILABILITY_STARTED });
 
-        // try {
-        const response = await fetch(`${userApiBaseUrl}/api/db-user`, {
-            headers: {
-                'Authorization': `Bearer ${jwt}`
+        try {
+            const [ userResponse, roomResponse ] = await Promise.all([
+                // User data request
+                fetch(`${userApiBaseUrl}/api/db-user`, {
+                    headers: { 'Authorization': `Bearer ${jwt}` }
+                }),
+                // Room availability request
+                fetch(`${userApiBaseUrl}/api/room-availability?roomName=${encodeURIComponent(roomName)}`, {
+                    headers: { 'Authorization': `Bearer ${jwt}` }
+                })
+            ]);
+
+            // ---== STEP 2: Process the User Data ==---
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+
+                dispatch({
+                    type: SET_IS_ACTIVE_HOST,
+                    isActiveHost: userData.user?.isActiveHost || false
+                });
+
+                // ---== STEP 3: Process the Room Data WITH User Context ==---
+                if (roomResponse.ok) {
+                    const roomData = await roomResponse.json();
+                    let isAvailable = roomData.available;
+
+                    // This is your new business logic!
+                    // If the room is NOT available...
+                    if (!isAvailable) {
+                        // ...check if the current user has this room in their booked rooms list.
+                        const isBookedByCurrentUser = userData.bookedRooms?.some(
+                            (bookedRoom: { roomName: string; }) => bookedRoom.roomName === roomName
+                        );
+
+                        console.log(isBookedByCurrentUser);
+                        // If it is booked by the current user, then for them, it IS available.
+                        if (isBookedByCurrentUser) {
+                            console.log(`Room '${roomName}' is booked, but by the current user. Marking as available.`);
+                            isAvailable = true;
+                        }
+                    }
+
+                    dispatch({
+                        type: SET_ROOM_AVAILABILITY,
+                        isAvailable
+                    });
+
+                } else {
+                    // If room check fails, fail open (assume it's available).
+                    dispatch({ type: SET_ROOM_AVAILABILITY, isAvailable: true });
+                }
+
+            } else {
+                // If user check fails, fail open for both.
+                dispatch({ type: SET_IS_ACTIVE_HOST, isActiveHost: false });
+                dispatch({ type: SET_ROOM_AVAILABILITY, isAvailable: true });
             }
-        });
 
-        console.log(response);
-
-        if (response.ok) {
-            const data = await response.json();
-            const isActiveHost = data.user?.isActiveHost || false;
-
-            dispatch({
-                type: SET_IS_ACTIVE_HOST,
-                isActiveHost
-            });
-        } else {
-            // If the request fails, assume they are not an active host to avoid blocking them.
-            dispatch({
-                type: SET_IS_ACTIVE_HOST,
-                isActiveHost: false
-            });
+        } catch (error) {
+            console.error('Failed to perform prejoin checks:', error);
+            // On any catastrophic failure, fail open.
+            dispatch({ type: SET_IS_ACTIVE_HOST, isActiveHost: false });
+            dispatch({ type: SET_ROOM_AVAILABILITY, isAvailable: true });
         }
-        // } catch (error) {
-        //     console.error('Failed to check active host status:', error);
-        //     dispatch({
-        //         type: SET_IS_ACTIVE_HOST,
-        //         isActiveHost: false
-        //     });
-        // }
     };
 }

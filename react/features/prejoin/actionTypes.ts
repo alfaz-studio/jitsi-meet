@@ -58,3 +58,13 @@ export const CHECK_ACTIVE_HOST_STARTED = 'CHECK_ACTIVE_HOST_STARTED';
  * Action to store the result of the active host check.
  */
 export const SET_IS_ACTIVE_HOST = 'SET_IS_ACTIVE_HOST';
+
+/**
+ * Action to indicate that the check for room availability has started.
+ */
+export const CHECK_ROOM_AVAILABILITY_STARTED = 'CHECK_ROOM_AVAILABILITY_STARTED';
+
+/**
+ * Action to store the result of the room availability check.
+ */
+export const SET_ROOM_AVAILABILITY = 'SET_ROOM_AVAILABILITY';

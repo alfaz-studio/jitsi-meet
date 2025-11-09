@@ -5,6 +5,7 @@ import ReducerRegistry from '../base/redux/ReducerRegistry';
 
 import {
     CHECK_ACTIVE_HOST_STARTED,
+    CHECK_ROOM_AVAILABILITY_STARTED,
     PREJOIN_JOINING_IN_PROGRESS,
     SET_DEVICE_STATUS,
     SET_DIALOUT_COUNTRY,
@@ -14,6 +15,7 @@ import {
     SET_JOIN_BY_PHONE_DIALOG_VISIBLITY,
     SET_PREJOIN_DEVICE_ERRORS,
     SET_PREJOIN_PAGE_VISIBILITY,
+    SET_ROOM_AVAILABILITY,
     SET_SKIP_PREJOIN_RELOAD
 } from './actionTypes';
 
@@ -34,7 +36,9 @@ const DEFAULT_STATE = {
     skipPrejoinOnReload: false,
     showJoinByPhoneDialog: false,
     isCheckingActiveHost: false,
-    isActiveHost: false
+    isActiveHost: false,
+    isCheckingRoomAvailability: false,
+    isRoomAvailable: true
 };
 
 export interface IPrejoinState {
@@ -50,6 +54,8 @@ export interface IPrejoinState {
     dialOutStatus: string;
     isActiveHost: boolean;
     isCheckingActiveHost: boolean;
+    isCheckingRoomAvailability: boolean;
+    isRoomAvailable: boolean;
     joiningInProgress?: boolean;
     name: string;
     rawError: string;
@@ -147,6 +153,19 @@ ReducerRegistry.register<IPrejoinState>(
                 ...state,
                 isCheckingActiveHost: false,
                 isActiveHost: action.isActiveHost
+            };
+
+        case CHECK_ROOM_AVAILABILITY_STARTED:
+            return {
+                ...state,
+                isCheckingRoomAvailability: true
+            };
+
+        case SET_ROOM_AVAILABILITY:
+            return {
+                ...state,
+                isCheckingRoomAvailability: false,
+                isRoomAvailable: action.isAvailable
             };
 
         default:
