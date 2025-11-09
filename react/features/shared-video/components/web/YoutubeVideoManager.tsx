@@ -2,6 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import YouTube from 'react-youtube';
+import { makeStyles } from 'tss-react/mui';
 
 import { PLAYBACK_STATUSES } from '../../constants';
 
@@ -10,6 +11,14 @@ import AbstractVideoManager, {
     _mapDispatchToProps,
     _mapStateToProps
 } from './AbstractVideoManager';
+
+const useStyles = makeStyles()(() => {
+    return {
+        youtubeContainer: {
+            height: '100%',
+        }
+    };
+});
 
 /**
  * Manager of shared video.
@@ -220,11 +229,23 @@ class YoutubeVideoManager extends AbstractVideoManager {
      * @inheritdoc
      */
     override render() {
+        const { classes } = this.props as IProps & { classes: ReturnType<typeof useStyles>['classes']; };
+
         return (
             <YouTube
+                className = { classes.youtubeContainer }
                 { ...this.getPlayerOptions() } />
         );
     }
 }
+const YoutubeVideoManagerWithStyles = (props: IProps) => {
+    const { classes } = useStyles();
 
-export default connect(_mapStateToProps, _mapDispatchToProps)(YoutubeVideoManager);
+    return (<YoutubeVideoManager
+        { ...props }
+        // @ts-ignore
+        classes = { classes } />);
+};
+
+
+export default connect(_mapStateToProps, _mapDispatchToProps)(YoutubeVideoManagerWithStyles);
