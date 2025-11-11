@@ -44,7 +44,7 @@ body {
  * This will hide the focus indicator if an element receives focus via the mouse,
  * but it will still show up on keyboard focus, thus preserving accessibility.
  */
-.js-focus-visible :focus:not(.focus-visible) {
+:focus:not(:focus-visible) {
   outline: none;
 }
 

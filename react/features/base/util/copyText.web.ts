@@ -1,5 +1,3 @@
-import clipboardCopy from 'clipboard-copy';
-
 /**
  * Tries to copy a given text to the clipboard.
  * Returns true if the action succeeds.
@@ -9,7 +7,7 @@ import clipboardCopy from 'clipboard-copy';
  */
 export async function copyText(textToCopy: string) {
     try {
-        await clipboardCopy(textToCopy);
+        await navigator.clipboard.writeText(textToCopy);
 
         return true;
     } catch (e) {

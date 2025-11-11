@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+/* Tailwind v4 Theme Configuration */
+/* Synced with Jitsi theme tokens from react/features/base/ui/tokens.json */
+
+@theme {
+  /* Colors - Action */
+  --color-action-01: #4687ed;
+  --color-action-02: #e0e0e0;
+  --color-action-03: #d83848;
+  --color-action-04: #246fe5;
+  --color-action-05: #4687ed;
+  --color-action-06: #0056e0;
+  --color-action-07: #d7e3f9;
+  --color-action-08: #99bbf3;
+  --color-action-09: #4687ed;
+
+  /* Colors - Active States */
+  --color-active-01: #0056e0;
+  --color-active-02: #c2c2c2;
+  --color-active-03: #cb2233;
+  --color-active-04: #189b55;
+  --color-active-05: #666666;
+  --color-active-07: #0056e0;
+  --color-active-08: #525252;
+  --color-active-09: #3d3d3d;
+  --color-active-10: #3d3d3d;
+  --color-active-11: #ccddf9;
+  --color-active-12: #666666;
+
+  /* Colors - Alerts */
+  --color-alert-green: #189b55;
+  --color-alert-red: #f24d5f;
+  --color-alert-yellow: #f8ae1a;
+
+  /* Colors - Brand */
+  --color-brand-01: #ffffff;
+
+  /* Colors - Data Visualization */
+  --color-data-01: #c15c97;
+  --color-data-02: #4079d3;
+  --color-data-03: #a276b2;
+  --color-data-04: #4cac9c;
+  --color-data-05: #e76782;
+  --color-data-06: #8ca7d1;
+  --color-data-07: #b23683;
+  --color-data-08: #ffa95e;
+  --color-data-09: #8b559f;
+  --color-data-10: #009b89;
+  --color-data-11: #858585;
+
+  /* Colors - Disabled */
+  --color-disabled-01: #c2c2c2;
+  --color-disabled-02: #666666;
+  --color-disabled-03: #c2c2c2;
+  --color-disabled-04: #858585;
+
+  /* Colors - Error */
+  --color-error-01: #f24d5f;
+
+  /* Colors - Focus */
+  --color-focus-01: #d7e3f9;
+
+  /* Colors - Highlight */
+  --color-highlight-01: #f8ae1a;
+
+  /* Colors - Hover States */
+  --color-hover-01: #4687ed;
+  --color-hover-02: #f1f1f1;
+  --color-hover-03: #f24d5f;
+  --color-hover-04: #4bce88;
+  --color-hover-05: #3d3d3d;
+  --color-hover-06: #666666;
+  --color-hover-07: #99bbf3;
+  --color-hover-08: #2f2e32;
+  --color-hover-09: #666666;
+  --color-hover-10: #292929;
+  --color-hover-11: #99bbf3;
+  --color-hover-12: #3d3d3d;
+  --color-hover-13: #525252;
+
+  /* Colors - Icons */
+  --color-icon-01: #ffffff;
+  --color-icon-02: #ffffff;
+  --color-icon-03: #666666;
+  --color-icon-04: #0056e0;
+  --color-icon-05: #292929;
+  --color-icon-06: #666666;
+  --color-icon-07: #858585;
+  --color-icon-08: #292929;
+
+  /* Colors - Info */
+  --color-info-01: #666666;
+
+  /* Colors - Overlay */
+  --color-overlay-01: #292929bf;
+
+  /* Colors - Shadow */
+  --color-shadow-01: #141414;
+
+  /* Colors - Status */
+  --color-status-available: #189b55;
+  --color-status-away: #dd7011;
+  --color-status-busy: #f24d5f;
+  --color-status-offline: #666666;
+  --color-status-wrapup: #8b559f;
+
+  /* Colors - Success */
+  --color-success-01: #189b55;
+
+  /* Colors - Text */
+  --color-text-01: #ffffff;
+  --color-text-02: #c2c2c2;
+  --color-text-04: #292929;
+  --color-text-05: #c2c2c2;
+  --color-text-06: #ffffff;
+  --color-text-07: #292929;
+  --color-text-08: #ffffff;
+  --color-text-09: #000000;
+  --color-text-10: #e7e3ff;
+
+  /* Colors - UI */
+  --color-ui-01: #666666;
+  --color-ui-02: #3d3d3d;
+  --color-ui-03: #858585;
+  --color-ui-04: #ffffff;
+  --color-ui-05: #2f2e32;
+  --color-ui-06: #171719;
+  --color-ui-07: #f1f1f1;
+  --color-ui-08: #e0e0e0;
+  --color-ui-09: #ccddf9;
+  --color-ui-10: #666666;
+  --color-ui-11: #0c0c0d;
+  --color-ui-12: #212124;
+  --color-ui-13: #003486;
+  --color-ui-14: #127440;
+  --color-ui-15: #00225a;
+  --color-ui-16: #f5d3d6;
+  --color-ui-17: #feefd1;
+  --color-ui-18: #d2f3e1;
+  --color-ui-19: #e0e0e0;
+  --color-ui-20: #e8dcec;
+  --color-ui-21: #c2c2c2;
+  --color-ui-22: #ccddf9;
+  --color-ui-23: #3c2f8e;
+  --color-ui-24: #5f50be;
+  --color-ui-25: #171719;
+
+  /* Colors - Warning */
+  --color-warning-01: #f8ae1a;
+  --color-warning-02: #f8ae1a;
+  --color-warning-03: #9f701c;
+
+  /* Font Family */
+  --font-family-sans: "Inter", sans-serif;
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+
+  /* Spacing - matches existing spacing array */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-2: 0.5rem;  /* 8px */
+  --spacing-3: 1rem;    /* 16px */
+  --spacing-4: 1.5rem;  /* 24px */
+  --spacing-5: 2rem;    /* 32px */
+  --spacing-6: 2.5rem;  /* 40px */
+  --spacing-7: 3rem;    /* 48px */
+  --spacing-8: 3.5rem;  /* 56px */
+  --spacing-9: 4rem;    /* 64px */
+  --spacing-10: 4.5rem; /* 72px */
+  --spacing-11: 5rem;   /* 80px */
+  --spacing-12: 5.5rem; /* 88px */
+  --spacing-13: 6rem;   /* 96px */
+  --spacing-14: 6.5rem; /* 104px */
+  --spacing-15: 7rem;   /* 112px */
+  --spacing-16: 7.5rem; /* 120px */
+  --spacing-17: 8rem;   /* 128px */
+
+  /* Border Radius */
+  --radius-sm: 0.375rem; /* 6px - matches shape.borderRadius */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 50%; /* matches shape.circleRadius */
+
+  /* Shadows */
+  --shadow-low: 0px 1px 2px 1px #141414;
+  --shadow-medium: 0px 2px 8px 2px #141414;
+  --shadow-high: 0px 2px 20px 9px #141414;
+
+  /* Breakpoints - matches existing breakpoints */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 400px;
+  --breakpoint-md: 480px;
+}
+

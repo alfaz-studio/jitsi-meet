@@ -1,4 +1,3 @@
-import { sha512_256 as sha512 } from 'js-sha512';
 import { upperFirst, words } from 'lodash-es';
 
 import { getName } from '../../app/functions';
@@ -31,6 +30,24 @@ import {
 } from './constants';
 import logger from './logger';
 import { IJitsiConference } from './reducer';
+
+/**
+ * Computes SHA-512/256 hash of a string using native Web Crypto API.
+ * This is the native replacement for js-sha512's sha512_256 function.
+ *
+ * @param {string} str - The string to hash.
+ * @returns {Promise<string>} The hex-encoded hash.
+ */
+async function sha512_256(str: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-512', data);
+
+    // SHA-512/256 uses first 32 bytes (256 bits) of SHA-512
+    const hashArray = Array.from(new Uint8Array(hashBuffer).slice(0, 32));
+
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 /**
  * Returns root conference state.
@@ -414,9 +431,9 @@ export function getRoomName(state: IReduxState) {
  *
  * @param {IReduxState} state - The current state of the app.
  * @param {Function} dispatch - The Redux dispatch function.
- * @returns {string} - Obfuscated room name.
+ * @returns {Promise<string>} - Obfuscated room name.
  */
-export function getOrCreateObfuscatedRoomName(state: IReduxState, dispatch: IStore['dispatch']) {
+export async function getOrCreateObfuscatedRoomName(state: IReduxState, dispatch: IStore['dispatch']) {
     let { obfuscatedRoom } = getConferenceState(state);
     const { obfuscatedRoomSource } = getConferenceState(state);
     const room = getRoomName(state);
@@ -429,7 +446,7 @@ export function getOrCreateObfuscatedRoomName(state: IReduxState, dispatch: ISto
     // stored even though a different room was joined.
     // Check if the obfuscatedRoom was already computed for the current room.
     if (!obfuscatedRoom || (obfuscatedRoomSource !== room)) {
-        obfuscatedRoom = sha512(room);
+        obfuscatedRoom = await sha512_256(room);
         dispatch(setObfuscatedRoom(obfuscatedRoom, room));
     }
 
@@ -442,13 +459,13 @@ export function getOrCreateObfuscatedRoomName(state: IReduxState, dispatch: ISto
  *
  * @param {IReduxState} state - The current state of the app.
  * @param {Function} dispatch - The Redux dispatch function.
- * @returns {string} - Analytics room name.
+ * @returns {Promise<string>} - Analytics room name.
  */
-export function getAnalyticsRoomName(state: IReduxState, dispatch: IStore['dispatch']) {
+export async function getAnalyticsRoomName(state: IReduxState, dispatch: IStore['dispatch']) {
     const { analysis: { obfuscateRoomName = false } = {} } = state['features/base/config'];
 
     if (obfuscateRoomName) {
-        return getOrCreateObfuscatedRoomName(state, dispatch);
+        return await getOrCreateObfuscatedRoomName(state, dispatch);
     }
 
     return getRoomName(state);

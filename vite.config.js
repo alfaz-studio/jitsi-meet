@@ -1,4 +1,6 @@
 import vitePluginSsi from '@catfyrr/vite-plugin-ssi';
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import tailwindcss from '@tailwindcss/vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import react from '@vitejs/plugin-react';
 import { exec } from 'child_process';
@@ -6,7 +8,6 @@ import fs from 'fs';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { fileURLToPath } from 'url';
-import { promisify } from 'util';
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import svgr from 'vite-plugin-svgr';
@@ -58,7 +59,6 @@ const STATIC_FILES = [
 const LIB_FILES = [
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets',
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets-dev',
-    'lib-jitsi-meet/dist/umd/lib-jitsi-meet.*',
     'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 
@@ -77,19 +77,31 @@ function deployLocalPlugin(options = {}) {
 
         async writeBundle() {
             try {
-                const execAsync = promisify(exec);
                 const scriptFullPath = path.resolve(__dirname, scriptPath);
 
                 if (fs.existsSync(scriptFullPath)) {
                     const stats = fs.statSync(scriptFullPath);
 
                     if (stats.isFile()) {
-                        const { stdout, stderr } = await execAsync(scriptFullPath, {
-                            timeout
+                        // Use Promise constructor with exec callback
+                        const {
+                            stdout: scriptStdout,
+                            stderr: scriptStderr
+                        } = await new Promise((resolve, reject) => {
+                            exec(scriptFullPath, { timeout }, (error, stdout, stderr) => {
+                                if (error) {
+                                    reject(error);
+                                } else {
+                                    resolve({
+                                        stdout,
+                                        stderr
+                                    });
+                                }
+                            });
                         });
 
-                        stdout && console.log('Deploy script output:', stdout);
-                        stderr && console.warn('Deploy script warnings:', stderr);
+                        scriptStdout && console.log('Deploy script output:', scriptStdout);
+                        scriptStderr && console.warn('Deploy script warnings:', scriptStderr);
                     }
                 }
             } catch (error) {
@@ -108,6 +120,11 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [
             vitePluginSsi(),
+            tailwindcss(),
+            paraglideVitePlugin({
+                project: './lang/project.inlang',
+                outdir: './lang/paraglide'
+            }),
             basicSsl({
                 name: 'jitsi-meet',
                 domains: [ 'localhost', '127.0.0.1', '::1' ],
@@ -208,13 +225,13 @@ export default defineConfig(({ mode }) => {
         optimizeDeps: {
             include: [
                 '@tensorflow/tfjs-backend-wasm',
-                '@vladmandic/human'
+                '@vladmandic/human',
+                'lib-jitsi-meet/index.browser.ts'
             ]
         },
 
         resolve: {
             alias: {
-                'focus-visible': 'focus-visible/dist/focus-visible.min.js',
                 '@giphy/js-analytics': path.resolve(__dirname, 'giphy-analytics-stub.js')
             },
             extensions: [

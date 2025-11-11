@@ -158,7 +158,7 @@ export async function createHandlers({ getState }: IStore) {
  * @param {Array<Object>} handlers - The analytics handlers.
  * @returns {boolean} - True if the analytics were successfully initialized and false otherwise.
  */
-export function initAnalytics(store: IStore, handlers: Array<Object>): boolean {
+export async function initAnalytics(store: IStore, handlers: Array<Object>): Promise<boolean> {
     const { getState, dispatch } = store;
 
     if (!isAnalyticsEnabled(getState) || handlers.length === 0) {
@@ -267,7 +267,7 @@ export function initAnalytics(store: IStore, handlers: Array<Object>): boolean {
         ...getState()['features/analytics'].initialPermanentProperties
     });
 
-    analytics.setConferenceName(getAnalyticsRoomName(state, dispatch));
+    analytics.setConferenceName(await getAnalyticsRoomName(state, dispatch));
 
     // Set the handlers last, since this triggers emptying of the cache
     analytics.setAnalyticsHandlers(handlers);

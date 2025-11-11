@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { scrollIntoView } from 'seamless-scroll-polyfill';
 import { makeStyles } from 'tss-react/mui';
 
 import { ISubtitle } from '../../../subtitles/types';
@@ -57,7 +56,7 @@ export function SubtitlesMessagesContainer({ messages, groups }: IProps) {
         const scrollTo = element ? element : messagesEndRef.current;
         const block = element ? 'end' : 'nearest';
 
-        scrollIntoView(scrollTo as Element, {
+        (scrollTo as Element)?.scrollIntoView({
             behavior: withAnimation ? 'smooth' : 'auto',
             block
         });
