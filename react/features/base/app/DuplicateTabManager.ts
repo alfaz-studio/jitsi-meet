@@ -1,9 +1,11 @@
 import { IStore } from '../../app/types';
+import { getConferenceName } from '../../base/conference/functions';
 import { openDialog } from '../../base/dialog/actions';
-import { setJoiningInProgress } from '../../prejoin/actions.web'; // <-- Import this action
+import { setJoiningInProgress } from '../../prejoin/actions.web';
 import DuplicateTabDialog from '../../prejoin/components/web/dialogs/DuplicateTabDialog';
 
 const CHANNEL_NAME = 'jitsi-meet-duplicate-tab-check';
+const MESSAGE_PREFIX = 'check-duplicate:';
 
 class DuplicateTabManager {
     private store: IStore | null = null;
@@ -31,12 +33,20 @@ class DuplicateTabManager {
 
         this.channel = new BroadcastChannel(CHANNEL_NAME);
         this.channel.onmessage = event => {
-            // Another tab is asking. If this tab is in a conference, respond.
-            if (event.data === 'check-duplicate') {
+            const message = event.data;
+
+            if (typeof message === 'string' && message.startsWith(MESSAGE_PREFIX)) {
                 const state = this.store?.getState();
 
-                if (state?.['features/base/conference'].conference) {
-                    this.channel?.postMessage('is-duplicate');
+                if (!state) {
+                    return;
+                }
+
+                const currentConferenceName = getConferenceName(state);
+                const incomingRoomName = message.substring(MESSAGE_PREFIX.length);
+
+                if (state['features/base/conference'].conference && currentConferenceName && currentConferenceName === incomingRoomName) {
+                    this.channel?.postMessage(`is-duplicate:${currentConferenceName}`);
                 }
             }
         };
@@ -60,27 +70,42 @@ class DuplicateTabManager {
      * @returns {void}
      */
     checkBeforeJoining(onSuccess: () => void): void {
+        const state = this.store?.getState();
+
+        if (!state) {
+            onSuccess();
+
+            return;
+        }
+        const roomName = getConferenceName(state);
+
+        if (!roomName) {
+            onSuccess();
+
+            return;
+        }
+
         const checkChannel = new BroadcastChannel(CHANNEL_NAME);
-        const timeout = 500; // This is a safe grace period, not a blocking delay.
+        const timeout = 500;
 
         const timeoutId = window.setTimeout(() => {
             checkChannel.close();
-            // No duplicate found, proceed with joining.
             onSuccess();
         }, timeout);
 
         checkChannel.onmessage = event => {
-            if (event.data === 'is-duplicate') {
+            const message = event.data;
+
+            if (typeof message === 'string' && message === `is-duplicate:${roomName}`) {
                 window.clearTimeout(timeoutId);
                 checkChannel.close();
 
-                // A duplicate was found. Show the dialog and cancel the "joining" state.
                 this.store?.dispatch(openDialog(DuplicateTabDialog));
                 this.store?.dispatch(setJoiningInProgress(false));
             }
         };
 
-        checkChannel.postMessage('check-duplicate');
+        checkChannel.postMessage(`${MESSAGE_PREFIX}${roomName}`);
     }
 
     /**
@@ -90,6 +115,17 @@ class DuplicateTabManager {
      * @returns {void}
      */
     checkOnPageLoad(): void {
+        const state = this.store?.getState();
+
+        if (!state) {
+            return;
+        }
+        const roomName = getConferenceName(state);
+
+        if (!roomName) {
+            return;
+        }
+
         const checkChannel = new BroadcastChannel(CHANNEL_NAME);
         const timeout = 500;
 
@@ -98,14 +134,14 @@ class DuplicateTabManager {
         }, timeout);
 
         checkChannel.onmessage = event => {
-            if (event.data === 'is-duplicate') {
+            if (typeof event.data === 'string' && event.data === `is-duplicate:${roomName}`) {
                 window.clearTimeout(timeoutId);
                 checkChannel.close();
                 this.store?.dispatch(openDialog(DuplicateTabDialog));
             }
         };
 
-        checkChannel.postMessage('check-duplicate');
+        checkChannel.postMessage(`${MESSAGE_PREFIX}${roomName}`);
     }
 }
 
