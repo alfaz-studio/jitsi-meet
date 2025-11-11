@@ -461,7 +461,8 @@ export function _mapStateToProps(state: IReduxState) {
     const participantId = localParticipant?.id;
     const inviteEnabledFlag = getFeatureFlag(state, INVITE_ENABLED, true);
     const { disableInviteFunctions } = state['features/base/config'];
-    const { isActiveHost, isRoomAvailable } = state['features/prejoin'];
+    const { isRoomAvailable } = state['features/prejoin'];
+    const { isActiveHost } = state['features/authentication'];
     const { isDisplayNameRequiredError, knocking, passwordJoinFailed } = state['features/lobby'];
     const { iAmSipGateway } = state['features/base/config'];
     const { disableLobbyPassword } = getSecurityUiConfig(state);

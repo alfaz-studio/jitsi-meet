@@ -537,11 +537,13 @@ function mapStateToProps(state: IReduxState) {
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
+    const { isActiveHost } = state['features/authentication'] 
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
-        isActiveHost: state['features/prejoin'].isActiveHost, isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
+        isActiveHost: Boolean(isActiveHost) ,
+        isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
         joiningInProgress,
         name,
         participantId,

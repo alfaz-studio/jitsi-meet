@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { IReduxState, IStore } from '../app/types';
-import { LOGIN } from '../authentication/actionTypes';
+import { CHECK_ACTIVE_HOST_STARTED, LOGIN, SET_IS_ACTIVE_HOST } from '../authentication/actionTypes';
 import DuplicateTabManager from '../base/app/DuplicateTabManager';
 import { updateConfig } from '../base/config/actions';
 import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions';
@@ -23,14 +23,12 @@ import { showErrorNotification } from '../notifications/actions';
 import { INotificationProps } from '../notifications/types';
 
 import {
-    CHECK_ACTIVE_HOST_STARTED,
     CHECK_ROOM_AVAILABILITY_STARTED,
     PREJOIN_JOINING_IN_PROGRESS,
     SET_DEVICE_STATUS,
     SET_DIALOUT_COUNTRY,
     SET_DIALOUT_NUMBER,
     SET_DIALOUT_STATUS,
-    SET_IS_ACTIVE_HOST,
     SET_JOIN_BY_PHONE_DIALOG_VISIBLITY,
     SET_PREJOIN_DEVICE_ERRORS,
     SET_PREJOIN_PAGE_VISIBILITY,
@@ -530,7 +528,8 @@ export function setPrejoinPageVisibility(value: boolean) {
 export function performPrejoinChecks() {
     return async (dispatch: IStore['dispatch'], getState: () => IReduxState) => {
         const state = getState();
-        const { isCheckingActiveHost, isCheckingRoomAvailability } = state['features/prejoin'];
+        const { isCheckingRoomAvailability } = state['features/prejoin'];
+        const { isCheckingActiveHost } = state["features/authentication"];
         const { userApiBaseUrl } = state['features/base/config'];
         const roomName = state['features/base/conference'].room;
         const jwt = state['features/base/jwt'].jwt;

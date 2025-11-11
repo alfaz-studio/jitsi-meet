@@ -1,3 +1,4 @@
+import { CHECK_ACTIVE_HOST_STARTED } from '../authentication/actionTypes';
 import PersistenceRegistry from '../base/redux/PersistenceRegistry';
 import ReducerRegistry from '../base/redux/ReducerRegistry';
 import { assign } from '../base/redux/functions';
@@ -6,6 +7,7 @@ import {
     CANCEL_LOGIN,
     DISABLE_MODERATOR_LOGIN,
     ENABLE_MODERATOR_LOGIN,
+    SET_IS_ACTIVE_HOST,
     SET_TOKEN_AUTH_URL_SUCCESS,
     STOP_WAIT_FOR_OWNER,
     UPGRADE_ROLE_FINISHED,
@@ -15,6 +17,8 @@ import {
 
 export interface IAuthenticationState {
     error?: Object | undefined;
+    isActiveHost?: boolean;
+    isCheckingActiveHost?: boolean;
     progress?: number | undefined;
     showModeratorLogin?: boolean;
     thenableWithCancel?: {
@@ -52,6 +56,19 @@ ReducerRegistry.register<IAuthenticationState>('features/authentication',
         return assign(state, {
             showModeratorLogin: true
         });
+
+    case SET_IS_ACTIVE_HOST:
+        return {
+            ...state,
+            isCheckingActiveHost: false,
+            isActiveHost: action.isActiveHost
+        };
+
+    case CHECK_ACTIVE_HOST_STARTED:
+        return {
+            ...state,
+            isCheckingActiveHost: true
+        };
 
     case SET_TOKEN_AUTH_URL_SUCCESS:
         return assign(state, {
