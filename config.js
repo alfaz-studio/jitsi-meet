@@ -1945,7 +1945,7 @@ var config = {
 
         // The server used to support whiteboard collaboration.
         // https://github.com/jitsi/excalidraw-backend
-        collabServerBaseUrl: `https://${meetdomain}/whiteboard`,
+        collabServerBaseUrl: `https://${meetdomain}`,
 
         // The user access limit to the whiteboard, introduced as a means
         // to control the performance.
