@@ -227,7 +227,8 @@ const Prejoin = ({
     deviceStatusVisible,
     hasJoinByPhoneButton,
     isActiveHost,
-    isDisplayNameVisible, joinConference,
+    isDisplayNameVisible,
+    joinConference,
     joinConferenceWithoutAudio,
     joiningInProgress,
     name,
@@ -537,12 +538,12 @@ function mapStateToProps(state: IReduxState) {
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
-    const { isActiveHost } = state['features/authentication'] 
+    const { isActiveHost } = state['features/authentication'];
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
-        isActiveHost: Boolean(isActiveHost) ,
+        isActiveHost: Boolean(isActiveHost),
         isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
         joiningInProgress,
         name,

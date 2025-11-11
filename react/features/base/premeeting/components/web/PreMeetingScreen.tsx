@@ -367,7 +367,7 @@ function mapStateToProps(state: IReduxState, ownProps: Partial<IProps>) {
             ? premeetingButtons
             : premeetingButtons.filter(b => isButtonEnabled(b, toolbarButtons)),
         _isPreCallTestEnabled: isPreCallTestEnabled(state),
-        _isRoomAvailable: state['features/prejoin'].isRoomAvailable,
+        _isRoomAvailable: state['features/base/conference'].isRoomAvailable,
         _premeetingBackground: premeetingBackground,
         _roomName: isRoomNameEnabled(state) ? getConferenceName(state) : ''
     };
