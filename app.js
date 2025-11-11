@@ -8,8 +8,6 @@ window.$ = window.jQuery = $;
 
 import '@matrix-org/olm';
 
-import 'focus-visible';
-
 /*
 * Safari polyfill for createImageBitmap
 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/createImageBitmap

@@ -2,15 +2,14 @@ module.exports = {
     extends: [
         '../.eslintrc.js',
         '@jitsi/eslint-config/jsdoc',
-        '@jitsi/eslint-config/react',
-        '.eslintrc-react-native.js'
+        '@jitsi/eslint-config/react'
     ],
     overrides: [
         {
             files: [ '*.ts', '*.tsx' ],
             extends: [ '@jitsi/eslint-config/typescript' ],
             parserOptions: {
-                project: [ './tsconfig.web.json', './tsconfig.native.json' ]
+                project: [ './tsconfig.json' ]
             },
             rules: {
                 // TODO: Remove these and fix the warnings

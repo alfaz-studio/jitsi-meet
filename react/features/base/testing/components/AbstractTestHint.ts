@@ -1,4 +1,7 @@
-import { GestureResponderEvent } from 'react-native';
+import React from 'react';
+
+// Web-compatible type (mobile GestureResponderEvent removed)
+type GestureResponderEvent = React.MouseEvent | React.TouchEvent;
 
 import { IReduxState } from '../../../app/types';
 import { isTestModeEnabled } from '../functions';

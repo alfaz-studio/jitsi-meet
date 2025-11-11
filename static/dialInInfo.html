@@ -6,6 +6,7 @@
     <!--#include virtual="/base.html" -->
     <!--#include virtual="/plugin.head.html" -->
     <link rel="stylesheet" href="../css/main.scss" />
+    <link href="../css/tailwind.css" rel="stylesheet">
     <script>
       window.EXCALIDRAW_ASSET_PATH = 'libs/';
       document.addEventListener('DOMContentLoaded', () => {
@@ -21,10 +22,10 @@
     <!--#include virtual="/title.html" -->
     <script><!--#include virtual="/config.js" --></script>
     <script><!--#include virtual="/interface_config.js" --></script>
-    <script src="libs/lib-jitsi-meet.min.js?v=139"></script>
+    <script src="../lib-jitsi-meet/index.browser.ts" type="module"></script>
     <script src="../app.js" type="module"></script>
   </head>
-  <body>
+  <body class="bg-[#040404] text-[#F1F1F1] m-0 w-full h-full overflow-hidden font-sans">
     <div id="react" role="main"></div>
   </body>
 </html>

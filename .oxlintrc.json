@@ -1,0 +1,16 @@
+{
+  "plugins": ["react"],
+  "rules": {},
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn"
+  },
+  "ignorePatterns": [
+    "lib-jitsi-meet/**",
+    "node_modules/**",
+    "build/**",
+    "dist/**",
+    "*.min.js"
+  ]
+}
+

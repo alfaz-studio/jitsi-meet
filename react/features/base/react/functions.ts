@@ -1,5 +1,3 @@
-import punycode from 'punycode';
-
 import { IStateful } from '../app/types';
 import { toState } from '../redux/functions';
 
@@ -11,6 +9,24 @@ import { toState } from '../redux/functions';
  */
 export function getFieldValue(fieldParameter: { target: { value: string; }; } | string) {
     return typeof fieldParameter === 'string' ? fieldParameter : fieldParameter?.target?.value;
+}
+
+/**
+ * Converts a string to ASCII using the native URL API's punycode encoding.
+ *
+ * @param {string} str - The string to convert.
+ * @returns {string} - The ASCII representation.
+ */
+function toASCII(str: string): string {
+    try {
+        // Use URL API's built-in punycode handling
+        const url = new URL(`https://${str}`);
+
+        return url.hostname;
+    } catch (e) {
+        // If it fails, return the original string
+        return str;
+    }
 }
 
 /**
@@ -33,7 +49,7 @@ export function formatURLText(text = '') {
         const { host } = url;
 
         if (host) {
-            url.host = punycode.toASCII(host);
+            url.host = toASCII(host);
             result = url.toString();
         }
     } catch (e) {
@@ -44,7 +60,7 @@ export function formatURLText(text = '') {
         // This will be the case for invalid URLs or URLs without a host (emails for example). In this case due to
         // the issue with PunycodeJS that truncates parts of the text when there is '@' we split the text by '@'
         // and use punycode for every separate part to prevent homograph attacks.
-        result = text.split('@').map(punycode.toASCII)
+        result = text.split('@').map(toASCII)
             .join('@');
     }
 

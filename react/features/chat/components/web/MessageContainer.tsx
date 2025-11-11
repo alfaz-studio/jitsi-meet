@@ -1,7 +1,6 @@
 import { throttle } from 'lodash-es';
 import React, { Component, RefObject } from 'react';
 import { ReactReduxContext } from 'react-redux';
-import { scrollIntoView } from 'seamless-scroll-polyfill';
 
 import { groupMessagesBySender } from '../../../base/util/messageGrouping';
 import { MESSAGE_TYPE_LOCAL, MESSAGE_TYPE_REMOTE } from '../../constants';
@@ -193,7 +192,7 @@ export default class MessageContainer extends Component<IProps, IState> {
         const scrollTo = element ? element : this._messagesListEndRef.current;
         const block = element ? 'center' : 'nearest';
 
-        scrollIntoView(scrollTo as Element, {
+        (scrollTo as Element)?.scrollIntoView({
             behavior: withAnimation ? 'smooth' : 'auto',
             block
         });

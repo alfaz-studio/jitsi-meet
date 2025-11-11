@@ -1,5 +1,7 @@
 import React from 'react';
-import { GestureResponderEvent } from 'react-native';
+
+// Web-compatible type (mobile GestureResponderEvent removed)
+type GestureResponderEvent = React.MouseEvent | React.TouchEvent;
 
 export interface IIconButtonProps {
     accessibilityLabel?: string;

@@ -5,7 +5,6 @@ import { IReduxState, IStore } from '../../app/types';
 import { isVisitorChatParticipant } from '../../chat/functions';
 import { isStageFilmstripAvailable } from '../../filmstrip/functions';
 import { isAddPeopleEnabled, isDialOutEnabled } from '../../invite/functions';
-import { toggleShareDialog } from '../../share-room/actions';
 import { iAmVisitor } from '../../visitors/functions';
 import { IVisitorChatParticipant } from '../../visitors/types';
 import { IStateful } from '../app/types';
@@ -850,21 +849,6 @@ export const addPeopleFeatureControl = (stateful: IStateful) => {
 
     return getFeatureFlag(state, ADD_PEOPLE_ENABLED, true)
     && (isAddPeopleEnabled(state) || isDialOutEnabled(state));
-};
-
-/**
- * Controls share dialog visibility.
- *
- * @param {boolean} addPeopleFeatureEnabled - Checks if add people functionality is enabled.
- * @param {Function} dispatch - The Redux dispatch function.
- * @returns {Function}
- */
-export const setShareDialogVisiblity = (addPeopleFeatureEnabled: boolean, dispatch: IStore['dispatch']) => {
-    if (addPeopleFeatureEnabled) {
-        dispatch(toggleShareDialog(false));
-    } else {
-        dispatch(toggleShareDialog(true));
-    }
 };
 
 /**
