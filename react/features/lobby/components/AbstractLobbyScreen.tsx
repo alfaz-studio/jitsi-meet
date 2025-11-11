@@ -49,6 +49,11 @@ export interface IProps {
     _isLobbyChatActive: boolean;
 
     /**
+     * Whether the current room name is booked or not.
+     */
+    _isRoomAvailable?: boolean;
+
+    /**
      * True if knocking is already happening, so we're waiting for a response.
      */
     _knocking: boolean;
@@ -456,7 +461,7 @@ export function _mapStateToProps(state: IReduxState) {
     const participantId = localParticipant?.id;
     const inviteEnabledFlag = getFeatureFlag(state, INVITE_ENABLED, true);
     const { disableInviteFunctions } = state['features/base/config'];
-    const { isActiveHost } = state['features/prejoin'];
+    const { isActiveHost, isRoomAvailable } = state['features/prejoin'];
     const { isDisplayNameRequiredError, knocking, passwordJoinFailed } = state['features/lobby'];
     const { iAmSipGateway } = state['features/base/config'];
     const { disableLobbyPassword } = getSecurityUiConfig(state);
@@ -477,6 +482,7 @@ export function _mapStateToProps(state: IReduxState) {
         _login: showModeratorLogin,
         _hangUp: showHangUp,
         _isLobbyChatActive: isLobbyChatActive,
+        _isRoomAvailable: isRoomAvailable,
         _meetingName: getConferenceName(state),
         _membersOnlyConference: membersOnly,
         _participantEmail: localParticipant?.email,

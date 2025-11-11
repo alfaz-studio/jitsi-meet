@@ -227,7 +227,7 @@ const Prejoin = ({
     deviceStatusVisible,
     hasJoinByPhoneButton,
     isActiveHost,
-    isDisplayNameVisible,    joinConference,
+    isDisplayNameVisible, joinConference,
     joinConferenceWithoutAudio,
     joiningInProgress,
     name,
@@ -541,7 +541,7 @@ function mapStateToProps(state: IReduxState) {
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
-        isActiveHost: state['features/prejoin'].isActiveHost,        isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
+        isActiveHost: state['features/prejoin'].isActiveHost, isDisplayNameVisible: isPrejoinDisplayNameVisible(state),
         joiningInProgress,
         name,
         participantId,
