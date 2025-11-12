@@ -9,6 +9,7 @@ import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
+import type { Plugin } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import svgr from 'vite-plugin-svgr';
 
@@ -16,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Static files to copy to build root (dest: ".")
-const ROOT_FILES = [
+const ROOT_FILES: string[] = [
     'fonts',
     'images',
     'lang',
@@ -35,7 +36,7 @@ const ROOT_FILES = [
     'title.html'
 ];
 
-const COMMON_ROOT_FILES = [
+const COMMON_ROOT_FILES: string[] = [
     'node_modules/@jitsi/rnnoise-wasm/dist/rnnoise.wasm',
     'node_modules/@matrix-org/olm/olm.wasm',
     'node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm',
@@ -45,7 +46,7 @@ const COMMON_ROOT_FILES = [
 ];
 
 // Static files to copy to build/static folder
-const STATIC_FILES = [
+const STATIC_FILES: string[] = [
     'static/pwa',
     'static/themes',
     'static/analytics.js',
@@ -56,17 +57,21 @@ const STATIC_FILES = [
 ];
 
 // Files to copy to build/libs folder
-const LIB_FILES = [
+const LIB_FILES: string[] = [
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets',
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets-dev',
     'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 
+interface DeployLocalPluginOptions {
+    scriptPath?: string;
+    timeout?: number;
+}
 
 /**
  * Plugin to run deploy-local.sh script
  */
-function deployLocalPlugin(options = {}) {
+function deployLocalPlugin(options: DeployLocalPluginOptions = {}): Plugin {
     const {
         scriptPath = 'deploy-local.sh',
         timeout = 300000 // 5 minutes timeout
@@ -87,14 +92,14 @@ function deployLocalPlugin(options = {}) {
                         const {
                             stdout: scriptStdout,
                             stderr: scriptStderr
-                        } = await new Promise((resolve, reject) => {
+                        } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
                             exec(scriptFullPath, { timeout }, (error, stdout, stderr) => {
                                 if (error) {
                                     reject(error);
                                 } else {
                                     resolve({
-                                        stdout,
-                                        stderr
+                                        stdout: stdout || '',
+                                        stderr: stderr || ''
                                     });
                                 }
                             });
@@ -105,7 +110,8 @@ function deployLocalPlugin(options = {}) {
                     }
                 }
             } catch (error) {
-                console.error('Error running deploy local script:', error.message);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Error running deploy local script:', errorMessage);
             }
         }
     };
@@ -114,7 +120,6 @@ function deployLocalPlugin(options = {}) {
 export default defineConfig(({ mode }) => {
     const isProduction = mode === 'production';
     const isDev = !isProduction;
-    // eslint-disable-next-line no-undef
     const analyzeBundle = Boolean(process.env.ANALYZE_BUNDLE);
 
     return {
@@ -157,28 +162,28 @@ export default defineConfig(({ mode }) => {
                         ...ROOT_FILES.map(src => {
                             return { src,
                                 dest: '.',
-                                overwrite: 'error' };
+                                overwrite: 'error' as const };
                         }),
 
                         // Common Root files
                         ...COMMON_ROOT_FILES.map(src => {
                             return { src,
                                 dest: '.',
-                                overwrite: 'error' };
+                                overwrite: 'error' as const };
                         }),
 
                         // Static files
                         ...STATIC_FILES.map(src => {
                             return { src,
                                 dest: 'static',
-                                overwrite: 'error' };
+                                overwrite: 'error' as const };
                         }),
 
                         // Library files
                         ...LIB_FILES.map(src => {
                             return { src,
                                 dest: 'libs',
-                                overwrite: 'error' };
+                                overwrite: 'error' as const };
                         })
                     ]
                 })
@@ -192,14 +197,14 @@ export default defineConfig(({ mode }) => {
                         ...COMMON_ROOT_FILES.map(src => {
                             return { src,
                                 dest: '.',
-                                overwrite: 'error' };
+                                overwrite: 'error' as const };
                         }),
 
                         // Library files
                         ...LIB_FILES.map(src => {
                             return { src,
                                 dest: 'libs',
-                                overwrite: 'error' };
+                                overwrite: 'error' as const };
                         })
                     ]
                 })
@@ -293,3 +298,4 @@ export default defineConfig(({ mode }) => {
         }
     };
 });
+
