@@ -2,9 +2,9 @@ name: Deploy
 
 on:
     push:
-        branches: [sonacove]
+        branches: [main, sonacove]
     pull_request:
-        branches: [sonacove]
+        branches: [main, sonacove]
 
 permissions:
     contents: read
@@ -55,7 +55,7 @@ jobs:
                   fi
 
             - name: Deploy to Production
-              if: github.ref == 'refs/heads/sonacove' && github.event_name == 'push'
+              if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sonacove') && github.event_name == 'push'
               uses: cloudflare/wrangler-action@v3
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -96,7 +96,7 @@ jobs:
             - name: Add deployment summary
               if: always()
               run: |
-                  if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/sonacove" ]]; then
+                  if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/sonacove") ]]; then
                       echo "**Deployment Type:** Production Deploy" >> $GITHUB_STEP_SUMMARY
                       echo "**Status:** ✅ Deployed to production" >> $GITHUB_STEP_SUMMARY
                       echo "::notice title=Production Deployment::🚀 Deployed to production successfully"
