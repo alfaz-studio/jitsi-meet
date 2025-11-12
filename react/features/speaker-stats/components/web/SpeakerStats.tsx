@@ -56,7 +56,7 @@ const useStyles = makeStyles()(theme => {
                         width: '100%',
                         '& .search-container': {
                             width: 175,
-                            marginRight: theme.spacing(3)
+                            marginRight: theme.spacing(7)
                         },
                         '& .search-container-full-width': {
                             width: '100%'
@@ -64,6 +64,7 @@ const useStyles = makeStyles()(theme => {
                     },
                     '& .emotions-icons': {
                         display: 'flex',
+                        marginLeft: theme.spacing(3),
                         '& svg': {
                             fill: '#000'
                         },

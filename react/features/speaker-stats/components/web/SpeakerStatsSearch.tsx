@@ -33,7 +33,7 @@ const useStyles = makeStyles()(theme => {
             borderRadius: 6,
             borderColor: theme.palette.ui05,
             color: theme.palette.text01,
-            padding: '10px 16px',
+            padding: '0 16px',
             width: '100%',
             height: 40,
             '&::placeholder': {
