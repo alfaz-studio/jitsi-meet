@@ -45,6 +45,7 @@ class DuplicateTabManager {
                 const currentConferenceName = getConferenceName(state);
                 const incomingRoomName = message.substring(MESSAGE_PREFIX.length);
 
+                // Another tab is asking. If this tab is in a conference, respond.
                 if (state['features/base/conference'].conference && currentConferenceName && currentConferenceName === incomingRoomName) {
                     this.channel?.postMessage(`is-duplicate:${currentConferenceName}`);
                 }
@@ -73,7 +74,7 @@ class DuplicateTabManager {
         const state = this.store?.getState();
 
         if (!state) {
-            onSuccess();
+            onSuccess(); // Failsafe if the store isn't ready.
 
             return;
         }
@@ -89,6 +90,7 @@ class DuplicateTabManager {
         const timeout = 500;
 
         const timeoutId = window.setTimeout(() => {
+            // No duplicate found, proceed with joining.
             checkChannel.close();
             onSuccess();
         }, timeout);
@@ -97,14 +99,17 @@ class DuplicateTabManager {
             const message = event.data;
 
             if (typeof message === 'string' && message === `is-duplicate:${roomName}`) {
+                // Another tab responded confirming it's a duplicate.
                 window.clearTimeout(timeoutId);
                 checkChannel.close();
 
+                // A duplicate was found. Show the dialog and cancel the "joining" state.
                 this.store?.dispatch(openDialog(DuplicateTabDialog));
                 this.store?.dispatch(setJoiningInProgress(false));
             }
         };
 
+        // Broadcast a request to all other tabs asking if they are in this room.
         checkChannel.postMessage(`${MESSAGE_PREFIX}${roomName}`);
     }
 

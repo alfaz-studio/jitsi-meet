@@ -748,7 +748,7 @@
         "notificationLobbyEnabled": "Lobby has been enabled by {{originParticipantName}}",
         "notificationTitle": "Lobby",
         "passwordJoinButton": "Join",
-        "roomIsBooked": "This is room is booked. Please wait for the host to start the meeting and let you in.",
+        "roomIsBooked": "This room is booked. Please wait for the host to start the meeting and let you in.",
         "title": "Lobby",
         "toggleLabel": "Enable lobby",
         "waitForModerator": "The conference has not yet started because no moderators have yet arrived. If you'd like to become a moderator please log-in. Otherwise, please wait."
