@@ -9,7 +9,6 @@ import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
-import type { Plugin } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import svgr from 'vite-plugin-svgr';
 
@@ -17,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Static files to copy to build root (dest: ".")
-const ROOT_FILES: string[] = [
+const ROOT_FILES = [
     'fonts',
     'images',
     'lang',
@@ -36,7 +35,7 @@ const ROOT_FILES: string[] = [
     'title.html'
 ];
 
-const COMMON_ROOT_FILES: string[] = [
+const COMMON_ROOT_FILES = [
     'node_modules/@jitsi/rnnoise-wasm/dist/rnnoise.wasm',
     'node_modules/@matrix-org/olm/olm.wasm',
     'node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm',
@@ -46,7 +45,7 @@ const COMMON_ROOT_FILES: string[] = [
 ];
 
 // Static files to copy to build/static folder
-const STATIC_FILES: string[] = [
+const STATIC_FILES = [
     'static/pwa',
     'static/themes',
     'static/analytics.js',
@@ -57,21 +56,16 @@ const STATIC_FILES: string[] = [
 ];
 
 // Files to copy to build/libs folder
-const LIB_FILES: string[] = [
+const LIB_FILES = [
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets',
     'node_modules/@jitsi/excalidraw/dist/excalidraw-assets-dev',
     'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 
-interface DeployLocalPluginOptions {
-    scriptPath?: string;
-    timeout?: number;
-}
-
 /**
  * Plugin to run deploy-local.sh script
  */
-function deployLocalPlugin(options: DeployLocalPluginOptions = {}): Plugin {
+function deployLocalPlugin(options = {}) {
     const {
         scriptPath = 'deploy-local.sh',
         timeout = 300000 // 5 minutes timeout
@@ -92,7 +86,7 @@ function deployLocalPlugin(options: DeployLocalPluginOptions = {}): Plugin {
                         const {
                             stdout: scriptStdout,
                             stderr: scriptStderr
-                        } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+                        } = await new Promise((resolve, reject) => {
                             exec(scriptFullPath, { timeout }, (error, stdout, stderr) => {
                                 if (error) {
                                     reject(error);
@@ -162,28 +156,28 @@ export default defineConfig(({ mode }) => {
                         ...ROOT_FILES.map(src => {
                             return { src,
                                 dest: '.',
-                                overwrite: 'error' as const };
+                                overwrite: 'error' };
                         }),
 
                         // Common Root files
                         ...COMMON_ROOT_FILES.map(src => {
                             return { src,
                                 dest: '.',
-                                overwrite: 'error' as const };
+                                overwrite: 'error' };
                         }),
 
                         // Static files
                         ...STATIC_FILES.map(src => {
                             return { src,
                                 dest: 'static',
-                                overwrite: 'error' as const };
+                                overwrite: 'error' };
                         }),
 
                         // Library files
                         ...LIB_FILES.map(src => {
                             return { src,
                                 dest: 'libs',
-                                overwrite: 'error' as const };
+                                overwrite: 'error' };
                         })
                     ]
                 })
@@ -197,14 +191,14 @@ export default defineConfig(({ mode }) => {
                         ...COMMON_ROOT_FILES.map(src => {
                             return { src,
                                 dest: '.',
-                                overwrite: 'error' as const };
+                                overwrite: 'error' };
                         }),
 
                         // Library files
                         ...LIB_FILES.map(src => {
                             return { src,
                                 dest: 'libs',
-                                overwrite: 'error' as const };
+                                overwrite: 'error' };
                         })
                     ]
                 })
