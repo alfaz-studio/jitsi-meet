@@ -62,7 +62,6 @@ const LIB_FILES = [
     'react/features/stream-effects/virtual-background/vendor/models/*.tflite'
 ];
 
-
 /**
  * Plugin to run deploy-local.sh script
  */
@@ -93,8 +92,8 @@ function deployLocalPlugin(options = {}) {
                                     reject(error);
                                 } else {
                                     resolve({
-                                        stdout,
-                                        stderr
+                                        stdout: stdout || '',
+                                        stderr: stderr || ''
                                     });
                                 }
                             });
@@ -105,7 +104,8 @@ function deployLocalPlugin(options = {}) {
                     }
                 }
             } catch (error) {
-                console.error('Error running deploy local script:', error.message);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Error running deploy local script:', errorMessage);
             }
         }
     };
@@ -114,7 +114,6 @@ function deployLocalPlugin(options = {}) {
 export default defineConfig(({ mode }) => {
     const isProduction = mode === 'production';
     const isDev = !isProduction;
-    // eslint-disable-next-line no-undef
     const analyzeBundle = Boolean(process.env.ANALYZE_BUNDLE);
 
     return {
@@ -293,3 +292,4 @@ export default defineConfig(({ mode }) => {
         }
     };
 });
+
