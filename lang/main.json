@@ -1434,8 +1434,6 @@
         "Settings": "Settings",
         "accessibilityLabel": {
             "Settings": "Open settings",
-            "annotate": "Draw and Annotate",
-            "annotateTooltip": "Open annotation tools",
             "audioOnly": "Toggle audio only",
             "audioRoute": "Select the sound device",
             "boo": "Boo",

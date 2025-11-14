@@ -4,7 +4,6 @@ import { DEFAULT_ICON } from './constants';
 
 const {
     IconAddUser,
-    IconAnnotate,
     IconArrowBack,
     IconArrowDown,
     IconArrowDownLarge,
@@ -128,7 +127,6 @@ const {
 
 export {
     IconAddUser,
-    IconAnnotate,
     IconArrowBack,
     IconArrowDown,
     IconArrowDownLarge,

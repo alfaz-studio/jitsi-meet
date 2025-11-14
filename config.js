@@ -29,6 +29,7 @@ var domain = window.location.host;
 var isProd = domain === 'sonacove.com' || domain === 'www.sonacove.com';
 var authdomain = isProd ? 'auth.sonacove.com/auth' : 'staj.sonacove.com/auth';
 var meetdomain = isProd ? 'meet.sonacove.com' : 'staj.sonacove.com';
+var apidomain = isProd ? 'sonacove.com' : 'sonacove.catfurr.workers.dev';
 var enableJaaS = false;
 
 var config = {
@@ -135,10 +136,10 @@ var config = {
     disableModeratorIndicator: false,
 
     // Disables the reactions feature.
-    disableReactions: true,
+    disableReactions: false,
 
     // Disables the reactions moderation feature.
-    disableReactionsModeration: true,
+    disableReactionsModeration: false,
 
     // Disables the reactions in chat feature.
     disableReactionsInChat: true,
@@ -887,7 +888,6 @@ var config = {
     // - 'desktop' controls the "Share your screen" button
     // - if `toolbarButtons` is undefined, we fallback to enabling all buttons on the UI
     toolbarButtons: [
-        'annotate',
         'camera',
         'chat',
 
@@ -929,7 +929,7 @@ var config = {
         'toggle-camera',
         'videoquality',
 
-        //    'whiteboard',
+        'whiteboard',
     ],
 
     // Holds values related to toolbar visibility control.
@@ -1944,21 +1944,21 @@ var config = {
     defaultLogoUrl: 'images/watermark.svg',
 
     // Settings for the Excalidraw whiteboard integration.
-    // whiteboard: {
-    //     // Whether the feature is enabled or not.
-    //     enabled: true,
+    whiteboard: {
+        // Whether the feature is enabled or not.
+        enabled: true,
 
-    //     // The server used to support whiteboard collaboration.
-    //     // https://github.com/jitsi/excalidraw-backend
-    //     collabServerBaseUrl: 'https://excalidraw-backend.example.com',
+        // The server used to support whiteboard collaboration.
+        // https://github.com/jitsi/excalidraw-backend
+        collabServerBaseUrl: `https://${meetdomain}`,
 
-    //     // The user access limit to the whiteboard, introduced as a means
-    //     // to control the performance.
-    //     userLimit: 25,
+        // The user access limit to the whiteboard, introduced as a means
+        // to control the performance.
+        userLimit: 25,
 
-    //     // The url for more info about the whiteboard and its usage limitations.
-    //     limitUrl: 'https://example.com/blog/whiteboard-limits',
-    // },
+        // The url for more info about the whiteboard and its usage limitations.
+        limitUrl: 'https://sonacove.com',
+    },
 
     // The watchRTC initialize config params as described :
     // https://testrtc.com/docs/installing-the-watchrtc-javascript-sdk/#h-set-up-the-sdk
@@ -2001,14 +2001,16 @@ var config = {
     disableCameraTintForeground: false,
 
     // File sharign service.
-    // fileSharing: {
-    //     // The URL of the file sharing service API. See resources/file-sharing.yaml for more details.
-    //     apiUrl: 'https://example.com',
-    //     // Whether the file sharing service is enabled or not.
-    //     enabled: true,
-    //     // Maximum file size limit (-1 value disables any file size limit check)
-    //     maxFileSize: 50,
-    // },
+    fileSharing: {
+        // The URL of the file sharing service API. See resources/file-sharing.yaml for more details.
+        apiUrl: `https://${apidomain}/api/file-sharing`,
+
+        // Whether the file sharing service is enabled or not.
+        enabled: true,
+
+        // Maximum file size limit (-1 value disables any file size limit check)
+        maxFileSize: 16_000_000,
+    },
 };
 
 // Set the default values for JaaS customers
