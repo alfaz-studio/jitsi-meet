@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 
@@ -11,6 +12,8 @@ import Toolbox from '../../../../toolbox/components/web/Toolbox';
 import { isButtonEnabled } from '../../../../toolbox/functions.web';
 import { getConferenceName } from '../../../conference/functions';
 import { PREMEETING_BUTTONS, THIRD_PARTY_PREJOIN_BUTTONS } from '../../../config/constants';
+import Icon from '../../../icons/components/Icon';
+import { IconInfoCircle } from '../../../icons/svg';
 import Tooltip from '../../../tooltip/components/Tooltip';
 import { isPreCallTestEnabled } from '../../functions';
 
@@ -30,6 +33,11 @@ interface IProps {
      * Determine if pre call test is enabled.
      */
     _isPreCallTestEnabled?: boolean;
+
+    /**
+     * Whether the current room name is booked or not.
+     */
+    _isRoomAvailable?: boolean;
 
     /**
      * The branding background of the premeeting screen(lobby/prejoin).
@@ -185,6 +193,38 @@ const useStyles = makeStyles()(theme => {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             maxWidth: '100%',
+        },
+
+
+        roomIsBookedContainer: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.palette.warning01,
+            color: theme.palette.uiBackground,
+            borderRadius: theme.shape.borderRadius,
+            padding: theme.spacing(3),
+            marginTop: theme.spacing(3),
+            textAlign: 'center',
+            width: '100%',
+            boxSizing: 'border-box'
+        },
+
+        bookedTitleContainer: {
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: theme.spacing(1)
+        },
+
+        bookedTitle: {
+            ...theme.typography.bodyShortBold,
+            marginLeft: theme.spacing(2)
+        },
+
+        bookedDescription: {
+            ...theme.typography.bodyShortRegular,
+            color: theme.palette.ui02
         }
     };
 });
@@ -192,6 +232,7 @@ const useStyles = makeStyles()(theme => {
 const PreMeetingScreen = ({
     _buttons,
     _isPreCallTestEnabled,
+    _isRoomAvailable,
     _premeetingBackground,
     _roomName,
     children,
@@ -204,7 +245,8 @@ const PreMeetingScreen = ({
     videoMuted,
     videoTrack
 }: IProps) => {
-    const { classes } = useStyles();
+    const { classes, theme } = useStyles();
+    const { t } = useTranslation();
     const style = _premeetingBackground ? {
         background: _premeetingBackground,
         backgroundPosition: 'center',
@@ -262,6 +304,25 @@ const PreMeetingScreen = ({
                             {showUnsafeRoomWarning && <UnsafeRoomWarning />}
                             {showDeviceStatus && <DeviceStatus />}
                             {showRecordingWarning && <RecordingWarning />}
+                            { !_isRoomAvailable && (
+                                <div
+                                    className = { classes.roomIsBookedContainer }
+                                    data-testid = 'prejoin.roomBookedWarning'
+                                    role = 'alert'>
+                                    <div className = { classes.bookedTitleContainer }>
+                                        <Icon
+                                            color = { theme.palette.ui01 }
+                                            size = { 24 }
+                                            src = { IconInfoCircle } />
+                                        <span className = { classes.bookedTitle }>
+                                            { t('prejoin.roomBookedWarningTitle') }
+                                        </span>
+                                    </div>
+                                    <p className = { classes.bookedDescription }>
+                                        { t('prejoin.roomBookedWarning') }
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -306,6 +367,7 @@ function mapStateToProps(state: IReduxState, ownProps: Partial<IProps>) {
             ? premeetingButtons
             : premeetingButtons.filter(b => isButtonEnabled(b, toolbarButtons)),
         _isPreCallTestEnabled: isPreCallTestEnabled(state),
+        _isRoomAvailable: state['features/base/conference'].isRoomAvailable,
         _premeetingBackground: premeetingBackground,
         _roomName: isRoomNameEnabled(state) ? getConferenceName(state) : ''
     };

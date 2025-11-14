@@ -1,8 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { IStore } from '../app/types';
-import { LOGIN } from '../authentication/actionTypes';
+import { IReduxState, IStore } from '../app/types';
+import { CHECK_ACTIVE_HOST_STARTED, LOGIN, SET_IS_ACTIVE_HOST } from '../authentication/actionTypes';
 import DuplicateTabManager from '../base/app/DuplicateTabManager';
+import { CHECK_ROOM_AVAILABILITY_STARTED, SET_ROOM_AVAILABILITY } from '../base/conference/actionTypes';
 import { updateConfig } from '../base/config/actions';
 import { getDialOutStatusUrl, getDialOutUrl } from '../base/config/functions';
 import { connect } from '../base/connection/actions';
@@ -514,5 +515,83 @@ export function setPrejoinPageVisibility(value: boolean) {
     return {
         type: SET_PREJOIN_PAGE_VISIBILITY,
         value
+    };
+}
+
+/**
+ * Performs all necessary pre-join checks for an authenticated user, including
+ * active host status and room availability.
+ *
+ * @returns {Function}
+ */
+export function performPrejoinChecks() {
+    return async (dispatch: IStore['dispatch'], getState: () => IReduxState) => {
+        const state = getState();
+        const { isCheckingRoomAvailability } = state['features/base/conference'];
+        const { isCheckingActiveHost } = state['features/authentication'];
+        const { userApiBaseUrl } = state['features/base/config'];
+        const roomName = state['features/base/conference'].room;
+        const jwt = state['features/base/jwt'].jwt;
+
+        if (isCheckingActiveHost || isCheckingRoomAvailability || !userApiBaseUrl || !jwt || !roomName) {
+            return;
+        }
+
+        dispatch({ type: CHECK_ACTIVE_HOST_STARTED });
+        dispatch({ type: CHECK_ROOM_AVAILABILITY_STARTED });
+
+        try {
+            const [ userResponse, roomResponse ] = await Promise.all([
+                fetch(`${userApiBaseUrl}/api/db-user`, {
+                    headers: { 'Authorization': `Bearer ${jwt}` }
+                }),
+                fetch(`${userApiBaseUrl}/api/room-availability?roomName=${encodeURIComponent(roomName)}`, {
+                    headers: { 'Authorization': `Bearer ${jwt}` }
+                })
+            ]);
+
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+
+                dispatch({
+                    type: SET_IS_ACTIVE_HOST,
+                    isActiveHost: userData.user?.isActiveHost || false
+                });
+
+                if (roomResponse.ok) {
+                    const roomData = await roomResponse.json();
+                    let isAvailable = roomData.available;
+
+                    if (!isAvailable) {
+                        const isBookedByCurrentUser = userData.bookedRooms?.some(
+                            (bookedRoom: { roomName: string; }) => bookedRoom.roomName === roomName
+                        );
+
+                        console.log(isBookedByCurrentUser);
+                        if (isBookedByCurrentUser) {
+                            console.log(`Room '${roomName}' is booked, but by the current user. Marking as available.`);
+                            isAvailable = true;
+                        }
+                    }
+
+                    dispatch({
+                        type: SET_ROOM_AVAILABILITY,
+                        isAvailable
+                    });
+
+                } else {
+                    dispatch({ type: SET_ROOM_AVAILABILITY, isAvailable: true });
+                }
+
+            } else {
+                dispatch({ type: SET_IS_ACTIVE_HOST, isActiveHost: false });
+                dispatch({ type: SET_ROOM_AVAILABILITY, isAvailable: true });
+            }
+
+        } catch (error) {
+            console.error('Failed to perform prejoin checks:', error);
+            dispatch({ type: SET_IS_ACTIVE_HOST, isActiveHost: false });
+            dispatch({ type: SET_ROOM_AVAILABILITY, isAvailable: true });
+        }
     };
 }

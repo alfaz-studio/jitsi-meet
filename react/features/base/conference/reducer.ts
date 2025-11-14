@@ -12,6 +12,7 @@ import { assign, equals, set } from '../redux/functions';
 
 import {
     AUTH_STATUS_CHANGED,
+    CHECK_ROOM_AVAILABILITY_STARTED,
     CONFERENCE_FAILED,
     CONFERENCE_JOINED,
     CONFERENCE_LEFT,
@@ -32,6 +33,7 @@ import {
     SET_PASSWORD,
     SET_PENDING_SUBJECT_CHANGE,
     SET_ROOM,
+    SET_ROOM_AVAILABILITY,
     SET_START_MUTED_POLICY,
     SET_START_REACTIONS_MUTED,
     UPDATE_CONFERENCE_METADATA
@@ -43,6 +45,8 @@ const DEFAULT_STATE = {
     conference: undefined,
     dataChannelOpen: undefined,
     e2eeSupported: undefined,
+    isCheckingRoomAvailability: false,
+    isRoomAvailable: true,
     joining: undefined,
     leaving: undefined,
     locked: undefined,
@@ -179,6 +183,8 @@ export interface IConferenceState {
     error?: Error;
     followMeEnabled?: boolean;
     followMeRecorderEnabled?: boolean;
+    isCheckingRoomAvailability?: boolean;
+    isRoomAvailable?: boolean;
     joining?: IJitsiConference;
     leaving?: IJitsiConference;
     lobbyError?: boolean;
@@ -226,6 +232,19 @@ ReducerRegistry.register<IConferenceState>('features/base/conference',
         switch (action.type) {
         case AUTH_STATUS_CHANGED:
             return _authStatusChanged(state, action);
+
+        case CHECK_ROOM_AVAILABILITY_STARTED:
+            return {
+                ...state,
+                isCheckingRoomAvailability: true
+            };
+
+        case SET_ROOM_AVAILABILITY:
+            return {
+                ...state,
+                isCheckingRoomAvailability: false,
+                isRoomAvailable: action.isAvailable
+            };
 
         case CONFERENCE_FAILED:
             return _conferenceFailed(state, action);

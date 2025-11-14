@@ -104,3 +104,13 @@ export const ENABLE_MODERATOR_LOGIN = 'ENABLE_MODERATOR_LOGIN';
  * }
  */
 export const WAIT_FOR_OWNER = 'WAIT_FOR_OWNER';
+
+/**
+ * Action to store the result of the active host check.
+ */
+export const SET_IS_ACTIVE_HOST = 'SET_IS_ACTIVE_HOST';
+
+/**
+ * Action to indicate that the check for an active host has started.
+ */
+export const CHECK_ACTIVE_HOST_STARTED = 'CHECK_ACTIVE_HOST_STARTED';
