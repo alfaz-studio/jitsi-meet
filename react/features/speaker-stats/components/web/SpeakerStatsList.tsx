@@ -9,7 +9,7 @@ import SpeakerStatsItem from './SpeakerStatsItem';
 const useStyles = makeStyles()(theme => {
     return {
         list: {
-            paddingTop: 90,
+            paddingTop: 100,
             '& .item': {
                 height: theme.spacing(7),
                 [theme.breakpoints.down(MOBILE_BREAKPOINT)]: {
