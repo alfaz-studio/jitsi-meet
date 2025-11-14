@@ -34,6 +34,11 @@ export interface IProps {
     _hangUp?: boolean;
 
     /**
+     * Whether the currect user is an active host in another meeting.
+     */
+    _isActiveHost?: boolean;
+
+    /**
      * Indicates whether the message that display name is required is shown.
      */
     _isDisplayNameRequiredActive: boolean;
@@ -42,6 +47,11 @@ export interface IProps {
      * True if moderator initiated a chat session with the participant.
      */
     _isLobbyChatActive: boolean;
+
+    /**
+     * Whether the current room name is booked or not.
+     */
+    _isRoomAvailable?: boolean;
 
     /**
      * True if knocking is already happening, so we're waiting for a response.
@@ -451,6 +461,8 @@ export function _mapStateToProps(state: IReduxState) {
     const participantId = localParticipant?.id;
     const inviteEnabledFlag = getFeatureFlag(state, INVITE_ENABLED, true);
     const { disableInviteFunctions } = state['features/base/config'];
+    const { isRoomAvailable } = state['features/base/conference'];
+    const { isActiveHost } = state['features/authentication'];
     const { isDisplayNameRequiredError, knocking, passwordJoinFailed } = state['features/lobby'];
     const { iAmSipGateway } = state['features/base/config'];
     const { disableLobbyPassword } = getSecurityUiConfig(state);
@@ -463,6 +475,7 @@ export function _mapStateToProps(state: IReduxState) {
 
     return {
         _deviceStatusVisible: deviceStatusVisible,
+        _isActiveHost: isActiveHost,
         _isDisplayNameRequiredActive: Boolean(isDisplayNameRequiredError),
         _knocking: knocking,
         _lobbyChatMessages: messages,
@@ -470,6 +483,7 @@ export function _mapStateToProps(state: IReduxState) {
         _login: showModeratorLogin,
         _hangUp: showHangUp,
         _isLobbyChatActive: isLobbyChatActive,
+        _isRoomAvailable: isRoomAvailable,
         _meetingName: getConferenceName(state),
         _membersOnlyConference: membersOnly,
         _participantEmail: localParticipant?.email,

@@ -380,3 +380,13 @@ export const SET_ASSUMED_BANDWIDTH_BPS = 'SET_ASSUMED_BANDWIDTH_BPS';
  * }
  */
 export const UPDATE_CONFERENCE_METADATA = 'UPDATE_CONFERENCE_METADATA';
+
+/**
+ * Action to store the result of the room availability check.
+ */
+export const SET_ROOM_AVAILABILITY = 'SET_ROOM_AVAILABILITY';
+
+/**
+ * Action to indicate that the check for room availability has started.
+ */
+export const CHECK_ROOM_AVAILABILITY_STARTED = 'CHECK_ROOM_AVAILABILITY_STARTED';

@@ -817,6 +817,11 @@ var config = {
     // The client id for the google APIs used for the calendar integration, youtube livestreaming, etc.
     // googleApiApplicationClientID: '<client_id>',
 
+    /**
+     * The base URL for the Sonacove API.
+     */
+    userApiBaseUrl: isProd ? 'https://sonacove.com' : 'https://sonacove.catfurr.workers.dev',
+
     // Configs for prejoin page.
     prejoinConfig: {
         // When 'true', it shows an intermediate page before joining, where the user can configure their devices.

@@ -49,6 +49,12 @@
     }
 }
 
+.toolbox-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .toolbox-content {
     align-items: center;
     box-sizing: border-box;

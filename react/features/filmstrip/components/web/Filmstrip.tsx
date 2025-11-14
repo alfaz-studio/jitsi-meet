@@ -2,6 +2,7 @@ import { Theme } from '@mui/material';
 import clsx from 'clsx';
 import { throttle } from 'lodash-es';
 import React, { PureComponent } from 'react';
+import { createPortal } from 'react-dom';
 import { WithTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 import { FixedSizeGrid, FixedSizeList } from 'react-window';
@@ -76,7 +77,9 @@ function styles(theme: Theme, props: IProps) {
             left: 'calc(50% - 16px)',
             opacity: 0,
             transition: 'opacity .3s',
-            zIndex: 1,
+            zIndex: 10050,
+            pointerEvents: 'auto' as const,
+            transformOrigin: 'center',
 
             '&:hover, &:focus-within': {
                 backgroundColor: theme.palette.ui02
@@ -84,11 +87,14 @@ function styles(theme: Theme, props: IProps) {
         },
 
         toggleFilmstripButton: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontSize: '0.875rem',
-            lineHeight: 1.2,
+            lineHeight: '24px',
             textAlign: 'center' as const,
             background: 'transparent',
-            height: 'auto',
+            height: '24px',
             width: '100%',
             padding: 0,
             margin: 0,
@@ -97,7 +103,8 @@ function styles(theme: Theme, props: IProps) {
             '-webkit-appearance': 'none',
 
             '& svg': {
-                fill: theme.palette.icon01
+                fill: theme.palette.icon01,
+                display: 'block'
             }
         },
 
@@ -441,15 +448,22 @@ interface IState {
      */
     dragFilmstripWidth?: number | null;
 
+    /** Whether the mouse is currently over the filmstrip root (used to show toggle). */
+    isHoveringFilmstrip?: boolean;
+
     /**
      * Whether or not the mouse is pressed.
      */
     isMouseDown: boolean;
-
     /**
      * Initial mouse position on drag handle mouse down.
      */
     mousePosition?: number | null;
+
+    /**
+     * Inline style for a portaled toggle container (positioning on document.body).
+     */
+    togglePortalStyle?: React.CSSProperties;
 }
 
 /**
@@ -461,6 +475,8 @@ interface IState {
 class Filmstrip extends PureComponent <IProps, IState> {
 
     _throttledResize: Function;
+    _rootRef: React.RefObject<HTMLDivElement>;
+    _hideTimeout: number | null;
 
     /**
      * Initializes a new {@code Filmstrip} instance.
@@ -475,6 +491,11 @@ class Filmstrip extends PureComponent <IProps, IState> {
             isMouseDown: false,
             mousePosition: null,
             dragFilmstripWidth: null
+        };
+
+        this.state = {
+            ...this.state,
+            isHoveringFilmstrip: false
         };
 
         // Bind event handlers so they are only bound once for every instance.
@@ -497,6 +518,11 @@ class Filmstrip extends PureComponent <IProps, IState> {
                 leading: true,
                 trailing: false
             });
+
+        this._rootRef = React.createRef();
+        this._onFilmstripMouseEnter = this._onFilmstripMouseEnter.bind(this);
+        this._onFilmstripMouseLeave = this._onFilmstripMouseLeave.bind(this);
+        this._hideTimeout = null;
     }
 
     /**
@@ -515,6 +541,8 @@ class Filmstrip extends PureComponent <IProps, IState> {
 
         // @ts-ignore
         document.addEventListener('mousemove', this._throttledResize);
+
+        this._updateTogglePortalPosition();
     }
 
     /**
@@ -529,6 +557,75 @@ class Filmstrip extends PureComponent <IProps, IState> {
 
         // @ts-ignore
         document.removeEventListener('mousemove', this._throttledResize);
+        this._clearHideTimer();
+    }
+
+    _startHideTimer() {
+        this._clearHideTimer();
+        try {
+            this._hideTimeout = window.setTimeout(() => {
+                this.setState({ isHoveringFilmstrip: false } as any);
+                this._hideTimeout = null;
+            }, 200);
+        } catch (e) {
+            this._hideTimeout = null;
+        }
+    }
+
+    _clearHideTimer() {
+        if (this._hideTimeout) {
+            clearTimeout(this._hideTimeout as any);
+            this._hideTimeout = null;
+        }
+    }
+
+    override componentDidUpdate() {
+        this._updateTogglePortalPosition();
+    }
+
+    _updateTogglePortalPosition() {
+        try {
+            if (typeof document === 'undefined' || !document.body) {
+                return;
+            }
+
+            const root = this._rootRef.current || document.querySelector('.filmstrip');
+
+            if (!root) {
+                return;
+            }
+
+            const rect = (root as HTMLElement).getBoundingClientRect();
+
+            const isVertical = this.props._isVerticalFilmstrip;
+
+            let top = 0;
+            let left = 0;
+
+            if (isVertical) {
+                left = Math.round(rect.left - 30);
+                top = Math.round(rect.top + (rect.height / 2) - 12);
+            } else if (this.props._topPanelFilmstrip) {
+                left = Math.round(rect.left + (rect.width / 2) - 16);
+                top = Math.round(rect.top - 24 - 6);
+            } else {
+                left = Math.round(rect.left + (rect.width / 2) - 16);
+                top = Math.round(rect.top - 24 - 2);
+            }
+
+            const style: React.CSSProperties = {
+                position: 'absolute',
+                left: `${left}px`,
+                top: `${top}px`,
+                zIndex: 10050
+            };
+
+            if (this.state.togglePortalStyle?.left !== style.left || this.state.togglePortalStyle?.top !== style.top) {
+                this.setState({ togglePortalStyle: style } as any);
+            }
+        } catch (e) {
+            // ignore errors for now
+        }
     }
 
     /**
@@ -591,10 +688,12 @@ class Filmstrip extends PureComponent <IProps, IState> {
 
         let toolbar: React.ReactNode = null;
 
-        if (!this.props._iAmRecorder && this.props._isFilmstripButtonEnabled
+        const shouldRenderToggle = (!this.props._iAmRecorder && this.props._isFilmstripButtonEnabled
             && _currentLayout !== LAYOUTS.TILE_VIEW
             && ((filmstripType === FILMSTRIP_TYPE.MAIN && !_filmstripDisabled)
-                || (filmstripType === FILMSTRIP_TYPE.STAGE && _topPanelFilmstrip))) {
+                || (filmstripType === FILMSTRIP_TYPE.STAGE && _topPanelFilmstrip)));
+
+        if (shouldRenderToggle) {
             toolbar = this._renderToggleButton();
         }
 
@@ -646,6 +745,9 @@ class Filmstrip extends PureComponent <IProps, IState> {
                     classes.filmstrip,
                     _verticalViewGrid && 'no-vertical-padding',
                     _verticalViewBackground && classes.filmstripBackground) }
+                onMouseEnter = { this._onFilmstripMouseEnter }
+                onMouseLeave = { this._onFilmstripMouseLeave }
+                ref = { this._rootRef }
                 style = { filmstripStyle }>
                 <span
                     aria-level = { 1 }
@@ -707,6 +809,15 @@ class Filmstrip extends PureComponent <IProps, IState> {
             });
             this.props.dispatch(setUserIsResizing(false));
         }
+    }
+
+    _onFilmstripMouseEnter() {
+        this._clearHideTimer();
+        this.setState({ isHoveringFilmstrip: true } as any);
+    }
+
+    _onFilmstripMouseLeave() {
+        this._startHideTimer();
     }
 
     /**
@@ -1054,13 +1165,25 @@ class Filmstrip extends PureComponent <IProps, IState> {
             ? { onTouchStart: this._onToggleButtonTouch }
             : { onClick: this._onToolbarToggleFilmstrip };
 
-        return (
+        const filmstripHasHiddenClass = Boolean(this.props._className && this.props._className.indexOf('hidden') !== -1);
+        const isHovering = Boolean(this.state?.isHoveringFilmstrip);
+        const showToggle = isHovering || filmstripHasHiddenClass;
+
+        const finalPortalStyle: React.CSSProperties = {
+            ...(this.state?.togglePortalStyle || {}),
+            opacity: showToggle ? 1 : 0,
+            pointerEvents: showToggle ? 'auto' : 'none',
+            transition: 'opacity .2s'
+        };
+
+        const toggle = (
             <div
                 className = { clsx(classes.toggleFilmstripContainer,
                     _isVerticalFilmstrip && classes.toggleVerticalFilmstripContainer,
                     _topPanelFilmstrip && classes.toggleTopPanelContainer,
                     _topPanelFilmstrip && !_topPanelVisible && classes.toggleTopPanelContainerHidden,
-                    'toggleFilmstripContainer') }>
+                    'toggleFilmstripContainer') }
+                style = { finalPortalStyle }>
                 <button
                     aria-expanded = { this.props._mainFilmstripVisible }
                     aria-label = { t('toolbar.accessibilityLabel.toggleFilmstrip') }
@@ -1076,6 +1199,16 @@ class Filmstrip extends PureComponent <IProps, IState> {
                 </button>
             </div>
         );
+
+        if (typeof document !== 'undefined' && document.body) {
+            try {
+                return createPortal(toggle, document.body);
+            } catch (e) {
+                return toggle;
+            }
+        }
+
+        return toggle;
     }
 }
 

@@ -91,7 +91,7 @@ class LobbyScreen extends AbstractLobbyScreen<IProps> {
      * @inheritdoc
      */
     override _renderJoining() {
-        const { _login, _isLobbyChatActive } = this.props;
+        const { _isLobbyChatActive } = this.props;
 
         return (
             <div className = 'lobby-screen-content'>
@@ -103,7 +103,7 @@ class LobbyScreen extends AbstractLobbyScreen<IProps> {
                                 <LoadingIndicator size = 'large' />
                             </div>
                             <span className = 'joining-message'>
-                                { this.props.t(_login ? 'lobby.waitForModerator' : 'lobby.joiningMessage') }
+                                { this.props.t(this._getLobbyMessageKey()) }
                             </span>
                         </>
                     )}
@@ -235,12 +235,34 @@ class LobbyScreen extends AbstractLobbyScreen<IProps> {
     }
 
     /**
+     * Determines the appropriate translation key for the lobby message based on the user's status.
+     *
+     * @returns {string} The translation key for the lobby message.
+     */
+    _getLobbyMessageKey(): string {
+        const { _login, _isActiveHost, _isRoomAvailable } = this.props;
+
+        if (_login) {
+            if (!_isRoomAvailable) {
+                return 'lobby.roomIsBooked';
+            }
+            if (_isActiveHost) {
+                return 'lobby.activeHostMessage';
+            }
+
+            return 'lobby.waitForModerator';
+        }
+
+        return 'lobby.joiningMessage';
+    }
+
+    /**
      * Renders the standard button set.
      *
      * @inheritdoc
      */
     override _renderStandardButtons() {
-        const { _knocking, _login, _isLobbyChatActive, _renderPassword } = this.props;
+        const { _knocking, _login, _isActiveHost, _isLobbyChatActive, _isRoomAvailable, _renderPassword } = this.props;
 
         return (
             <>
@@ -269,7 +291,7 @@ class LobbyScreen extends AbstractLobbyScreen<IProps> {
                     testId = 'lobby.enterPasswordButton'
                     type = { BUTTON_TYPES.SECONDARY } />
                 }
-                {_login && <Button
+                {(_login && !_isActiveHost && _isRoomAvailable) && <Button
                     className = 'lobby-button-margin'
                     fullWidth = { true }
                     labelKey = 'dialog.IamHost'

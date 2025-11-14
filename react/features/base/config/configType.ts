@@ -635,6 +635,7 @@ export interface IConfig {
     };
     useHostPageLocalStorage?: boolean;
     useTurnUdp?: boolean;
+    userApiBaseUrl?: string;
     videoQuality?: {
         codecPreferenceOrder?: Array<string>;
         maxBitratesVideo?: {

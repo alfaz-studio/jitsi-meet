@@ -233,9 +233,12 @@ const ContextMenu = ({
             outerHeight = getComputedOuterHeight(container);
             height = Math.min(MAX_HEIGHT, outerHeight);
 
+            // style.top requires units (e.g. 'px') in standards mode —
+            // previously code relied on quirks-mode behavior where bare numbers
+            // could be interpreted as pixels. Ensure we always set 'px'.
             container.style.top = offsetTop + height > offsetHeight + scrollTop
-                ? `${offsetTop - outerHeight}`
-                : `${offsetTop}`;
+                ? `${offsetTop - outerHeight}px`
+                : `${offsetTop}px`;
 
             setIsHidden(false);
         } else {
