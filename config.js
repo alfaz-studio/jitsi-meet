@@ -1168,7 +1168,7 @@ var config = {
 
     analytics: {
         // True if the analytics should be disabled
-        disabled: false,
+        disabled: true,
 
         // Matomo configuration:
         // matomoEndpoint: 'https://your-matomo-endpoint/',
