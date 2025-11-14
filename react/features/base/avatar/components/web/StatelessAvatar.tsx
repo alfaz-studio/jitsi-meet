@@ -68,7 +68,7 @@ const useStyles = makeStyles()(theme => {
             },
 
             '& .jitsi-icon': {
-                transform: 'translateY(50%)'
+                transform: 'translateY(25%)'
             },
 
             '& .avatar-svg': {

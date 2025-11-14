@@ -714,6 +714,7 @@
         "youtubeTerms": "YouTube terms of services"
     },
     "lobby": {
+        "activeHostMessage": "You are already hosting another meeting. Please end your other session to host this one, or wait for a moderator to let you in.",
         "backToKnockModeButton": "Ask to join",
         "chat": "Chat",
         "dialogTitle": "Lobby mode",
@@ -747,6 +748,7 @@
         "notificationLobbyEnabled": "Lobby has been enabled by {{originParticipantName}}",
         "notificationTitle": "Lobby",
         "passwordJoinButton": "Join",
+        "roomIsBooked": "This room is booked. Please wait for the host to start the meeting and let you in.",
         "title": "Lobby",
         "toggleLabel": "Enable lobby",
         "waitForModerator": "The conference has not yet started because no moderators have yet arrived. If you'd like to become a moderator please log-in. Otherwise, please wait."
@@ -993,6 +995,8 @@
     },
     "poweredby": "powered by",
     "prejoin": {
+        "activeHostWarning": "You are already hosting another meeting. You can join this meeting as a participant.",
+        "activeHostWarningTitle": "You can not start a meeting.",
         "audioAndVideoError": "Audio and video error:",
         "audioDeviceProblem": "There is a problem with your audio device",
         "audioOnlyError": "Audio error:",
@@ -1187,6 +1191,8 @@
         "premeeting": "Pre meeting",
         "proceedAnyway": "Proceed anyway",
         "recordingWarning": "Other participants may be recording this call",
+        "roomBookedWarning": "You can join and wait in the lobby for the host to let you in.",
+        "roomBookedWarningTitle": "This room is currently booked",
         "screenSharingError": "Screen sharing error:",
         "startWithPhone": "Start with phone audio",
         "unsafeRoomConsent": "I understand the risks, I want to join the meeting",

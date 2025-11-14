@@ -234,6 +234,7 @@ export default [
     'transcribingEnabled',
     'transcription',
     'useHostPageLocalStorage',
+    'userApiBaseUrl',
     'useTurnUdp',
     'videoQuality',
     'visitors.enableMediaOnPromote',

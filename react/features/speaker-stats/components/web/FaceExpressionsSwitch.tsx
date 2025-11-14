@@ -9,12 +9,14 @@ const useStyles = makeStyles()((theme: Theme) => {
     return {
         switchContainer: {
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            gap: theme.spacing(2)
         },
 
         switchLabel: {
-            marginRight: 10,
-            ...theme.typography.bodyShortRegular
+            marginRight: 5,
+            ...theme.typography.bodyShortRegular,
+            whiteSpace: 'nowrap'
         }
     };
 });
