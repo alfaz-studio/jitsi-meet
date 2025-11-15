@@ -4,14 +4,14 @@ import { IReduxState } from '../../app/types';
 import { translate } from '../../base/i18n/functions';
 import { IconPictureInPicture } from '../../base/icons/svg';
 import AbstractButton, { IProps as AbstractButtonProps } from '../../base/toolbox/components/AbstractButton';
-import { toggleWebPip } from '../actions';
+import { isPipActive, togglePip } from '../functions';
 
 interface IProps extends AbstractButtonProps {
-    _inPip: boolean;
+    _getState: () => IReduxState;
 }
 
 /**
- * Implements an {@link AbstractButton} to open the applications page in a new window.
+ * Implements an {@link AbstractButton} to toggle Picture-in-Picture mode.
  */
 class WebPictureInPictureButton extends AbstractButton<IProps> {
     override accessibilityLabel = 'toolbar.accessibilityLabel.pip';
@@ -20,13 +20,16 @@ class WebPictureInPictureButton extends AbstractButton<IProps> {
     override tooltip = 'toolbar.accessibilityLabel.pip';
 
     override _handleClick() {
-        const { dispatch } = this.props;
+        const { _getState } = this.props;
 
-        dispatch(toggleWebPip());
+        togglePip(_getState).catch(error => {
+            console.warn('[WebPip] Failed to toggle Picture-in-Picture:', error);
+        });
     }
 
     override _isToggled() {
-        return this.props._inPip;
+        // Check browser state directly instead of Redux state
+        return isPipActive();
     }
 }
 
@@ -38,9 +41,9 @@ class WebPictureInPictureButton extends AbstractButton<IProps> {
  * @returns {Object}
  */
 function _mapStateToProps(state: IReduxState) {
-    const { inPip } = state['features/picture-in-picture-web'] || { inPip: false };
-
-    return { _inPip: inPip };
+    return {
+        _getState: () => state
+    };
 }
 
 

@@ -1,4 +1,4 @@
-import { IReduxState, IStore } from '../app/types';
+import { IReduxState } from '../app/types';
 import { getAvatarColor } from '../base/avatar/functions';
 import { leaveConference } from '../base/conference/actions.any';
 import JitsiMeetJS from '../base/lib-jitsi-meet/_';
@@ -8,14 +8,11 @@ import { getParticipantById } from '../base/participants/functions';
 import { getVideoTrackByParticipant, isLocalTrackMuted } from '../base/tracks/functions.any';
 import { getLargeVideoParticipant } from '../large-video/functions';
 
-import { webPipExited } from './actions';
-
 type GetState = () => IReduxState;
 
 class WebPipController {
     private canvas?: HTMLCanvasElement;
     private ctx?: CanvasRenderingContext2D | null;
-    private dispatch?: IStore['dispatch'];
     private hiddenVideo?: HTMLVideoElement;
     private animationHandle?: number;
     private intervalHandle?: number;
@@ -23,6 +20,8 @@ class WebPipController {
     private lastAudioLevel = 0;
     private audioTrackListenerBound = false;
     private currentParticipantId?: string;
+    private enterPiPResolve?: () => void;
+    private onExitCallback?: () => void;
 
     public isSupported(): boolean {
         const anyDoc: any = document as any;
@@ -30,56 +29,125 @@ class WebPipController {
         return Boolean((document as any).pictureInPictureEnabled || anyDoc.webkitSupportsPresentationMode);
     }
 
-    public async enter(getState: GetState, dispatch: IStore['dispatch']) {
+    /**
+     * Checks if Picture-in-Picture is actually active in the browser.
+     * This helps synchronize our internal state with the browser's actual state.
+     *
+     * @returns {boolean} True if PiP is currently active, false otherwise.
+     */
+    public isActive(): boolean {
+        return Boolean(document.pictureInPictureElement) || this.running;
+    }
+
+    public async enter(getState: GetState, onExit?: () => void) {
         if (this.running) {
             return;
         }
 
-        this.dispatch = dispatch;
+        this.onExitCallback = onExit;
         this.running = true;
         this.ensureElements();
 
-        // Kick off draw loop bound to large video visuals.
-        // Use setInterval to avoid full rAF throttling on background tabs.
-        const draw = () => {
-            if (!this.running) {
-                return;
+        try {
+            // Kick off draw loop bound to large video visuals.
+            // Use setInterval to avoid full rAF throttling on background tabs.
+            const draw = () => {
+                if (!this.running) {
+                    return;
+                }
+                this.drawFrame(getState);
+            };
+
+            this.intervalHandle = window.setInterval(draw, Math.floor(1000 / 24));
+
+            // Pipe canvas into hidden video and request PiP.
+            const stream = this.canvas!.captureStream(24);
+
+            this.hiddenVideo!.srcObject = stream;
+            this.hiddenVideo!.muted = true;
+
+            try {
+                await this.hiddenVideo!.play();
+            } catch (playError: any) {
+                // AbortError is expected when play() is interrupted (e.g., rapid tab switches)
+                // This is not a critical error, just continue
+                if (playError?.name !== 'AbortError') {
+                    throw playError;
+                }
+                // For AbortError, check if video is actually playing before continuing
+                if (this.hiddenVideo!.paused) {
+                    // If still paused, try once more or throw
+                    try {
+                        await this.hiddenVideo!.play();
+                    } catch (retryError) {
+                        // If retry also fails, it's likely a real issue
+                        throw retryError;
+                    }
+                }
             }
-            this.drawFrame(getState);
-        };
 
-        this.intervalHandle = window.setInterval(draw, Math.floor(1000 / 24));
+            this.hiddenVideo!.addEventListener('leavepictureinpicture', this.onLeavePiP);
+            document.addEventListener('leavepictureinpicture', this.onLeavePiP);
 
-        // Pipe canvas into hidden video and request PiP.
-        const stream = this.canvas!.captureStream(24);
+            const anyVid: any = this.hiddenVideo as any;
 
-        this.hiddenVideo!.srcObject = stream;
-        this.hiddenVideo!.muted = true;
-        await this.hiddenVideo!.play();
+            if (this.hiddenVideo?.requestPictureInPicture) {
+                // Listen for enterpictureinpicture event to know when PiP is actually entered
+                const onEnterPiP = () => {
+                    if (this.enterPiPResolve) {
+                        this.enterPiPResolve();
+                        this.enterPiPResolve = undefined;
+                    }
+                    this.hiddenVideo?.removeEventListener('enterpictureinpicture', onEnterPiP);
+                    document.removeEventListener('enterpictureinpicture', onEnterPiP);
+                };
 
-        this.hiddenVideo!.addEventListener('leavepictureinpicture', this.onLeavePiP);
+                this.hiddenVideo!.addEventListener('enterpictureinpicture', onEnterPiP);
+                document.addEventListener('enterpictureinpicture', onEnterPiP);
 
-        if (this.hiddenVideo?.requestPictureInPicture) {
-            await this.hiddenVideo!.requestPictureInPicture();
-            this.setupMediaSession(getState);
+                try {
+                    // Wait for either the promise or the event to ensure PiP is actually entered
+                    const enterPromise = this.hiddenVideo!.requestPictureInPicture();
+                    const eventPromise = new Promise<void>(resolve => {
+                        this.enterPiPResolve = resolve;
+                    });
+
+                    await Promise.race([ enterPromise, eventPromise ]);
+                    this.setupMediaSession(getState);
+                } catch (error) {
+                    // Clean up event listeners if entering PiP fails
+                    this.hiddenVideo?.removeEventListener('enterpictureinpicture', onEnterPiP);
+                    document.removeEventListener('enterpictureinpicture', onEnterPiP);
+                    this.enterPiPResolve = undefined;
+                    throw error;
+                }
+            } else if (anyVid.webkitSetPresentationMode) {
+                anyVid.webkitSetPresentationMode('picture-in-picture');
+                this.setupMediaSession(getState);
+            }
+        } catch (error) {
+            // If entering PiP fails (e.g., no user gesture), clean up and rethrow
+            // so the caller can handle it appropriately
+            this.running = false;
+            if (this.intervalHandle) {
+                clearInterval(this.intervalHandle);
+                this.intervalHandle = undefined;
+            }
+            const ms = this.hiddenVideo?.srcObject as MediaStream | undefined;
+
+            ms?.getTracks().forEach(t => t.stop());
+            if (this.hiddenVideo) {
+                this.hiddenVideo.srcObject = null;
+            }
+            this.onExitCallback = undefined;
+            throw error;
         }
-
-        const anyVid: any = this.hiddenVideo as any;
-
-        if (this.hiddenVideo?.requestPictureInPicture) {
-            await this.hiddenVideo!.requestPictureInPicture();
-            this.setupMediaSession(getState);
-        } else if (anyVid.webkitSetPresentationMode) {
-            anyVid.webkitSetPresentationMode('picture-in-picture');
-            this.setupMediaSession(getState);
-        }
-
-        document.addEventListener('leavepictureinpicture', this.onLeavePiP);
     }
 
     public async exit() {
-        // The onLeavePiP event handler will take care of all the cleanup.
-        if (this.running && document.pictureInPictureElement) {
+        // If PiP is actually active in the browser, try to exit it.
+        // The onLeavePiP event handler will take care of the cleanup.
+        if (document.pictureInPictureElement) {
             try {
                 await document.exitPictureInPicture();
             } catch (error) {
@@ -87,8 +155,11 @@ class WebPipController {
                 // If it fails, force a cleanup just in case.
                 this.onLeavePiP();
             }
-        } else {
-            console.warn('[Controller] exit() called, but no PiP window was open.');
+        } else if (this.running) {
+            // PiP was closed by the browser (e.g., tab switch), but our state wasn't updated.
+            // Force cleanup to synchronize state.
+            // This is expected behavior, so we don't need to log it as a warning
+            this.onLeavePiP();
         }
     }
 
@@ -100,8 +171,9 @@ class WebPipController {
 
         this.running = false;
 
-        // Clean up the event listener itself
+        // Clean up the event listeners
         this.hiddenVideo?.removeEventListener('leavepictureinpicture', this.onLeavePiP);
+        document.removeEventListener('leavepictureinpicture', this.onLeavePiP);
 
         // Clear Media Session handlers
         this.clearMediaSession();
@@ -124,8 +196,11 @@ class WebPipController {
             this.detachAudioLevelListener();
         }
 
-        this.dispatch?.(webPipExited());
-        this.dispatch = undefined;
+        // Notify callback that PiP has exited
+        if (this.onExitCallback) {
+            this.onExitCallback();
+            this.onExitCallback = undefined;
+        }
     };
 
     private ensureElements() {
@@ -262,7 +337,7 @@ class WebPipController {
      * @returns {void}
      */
     private setupMediaSession(getState: GetState) {
-        if (!('mediaSession' in navigator) || !this.dispatch) {
+        if (!('mediaSession' in navigator)) {
             return;
         }
 
@@ -275,13 +350,21 @@ class WebPipController {
 
         const mediaSession = navigator.mediaSession as any;
 
+        // Use APP.store if available for dispatching actions
+        // This is a common pattern in Jitsi Meet
+        const store = (window as any).APP?.store;
+
+        if (!store) {
+            return;
+        }
+
         // Toggle Microphone
         mediaSession.setActionHandler('togglemicrophone', () => {
             const currentState = getState();
             const tracks = currentState['features/base/tracks'];
             const isAudioMuted = isLocalTrackMuted(tracks, MEDIA_TYPE.AUDIO);
 
-            this.dispatch?.(setAudioMuted(!isAudioMuted, true));
+            store.dispatch(setAudioMuted(!isAudioMuted, true));
         });
 
         // Toggle Camera
@@ -290,12 +373,12 @@ class WebPipController {
             const tracks = currentState['features/base/tracks'];
             const isVideoMuted = isLocalTrackMuted(tracks, MEDIA_TYPE.VIDEO);
 
-            this.dispatch?.(setVideoMuted(!isVideoMuted, VIDEO_MUTISM_AUTHORITY.USER, true));
+            store.dispatch(setVideoMuted(!isVideoMuted, VIDEO_MUTISM_AUTHORITY.USER, true));
         });
 
         // Hangup
         mediaSession.setActionHandler('hangup', () => {
-            this.dispatch?.(leaveConference());
+            store.dispatch(leaveConference());
             this.exit(); // Exit PiP on hangup
         });
 
