@@ -1,36 +1,36 @@
 {
-  "android_package_name": "org.jitsi.meet",
+  "android_package_name": "org.sonacove.meet",
   "prefer_related_applications": true,
   "related_applications": [
     {
-      "id": "org.jitsi.meet",
+      "id": "org.sonacove.meet",
       "platform": "chromeos_play"
     }
   ],
-  "short_name": "Jitsi Meet",
-  "name": "Jitsi Meet",
+  "short_name": "Sonacove Meets",
+  "name": "Sonacove Meets",
   "icons": [
     {
-      "src": "static/pwa/icons/icon192.png",
+      "src": "static/pwa/AppImages/android/android-launchericon-192-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "static/pwa/icons/icon512.png",
+      "src": "static/pwa/AppImages/android/android-launchericon-512-512.png",
       "type": "image/png",
       "sizes": "512x512"
     },
     {
-      "src": "static/pwa/icons/iconMask.png",
+      "src": "static/pwa/AppImages/android/android-launchericon-512-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "start_url": "/",
-  "background_color": "#17A0DB",
+  "start_url": "/meet",
+  "background_color": "#F9FAFB",
   "display": "standalone",
   "scope": "/",
-  "theme_color": "#17A0DB"
+  "theme_color": "#F9FAFB"
  }
  
